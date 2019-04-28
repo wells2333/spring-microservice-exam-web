@@ -6,21 +6,21 @@
           <el-col :span="4" :offset="2" class="footer-col">
             <h3 class="c1">服务支持</h3>
             <ul>
-              <li class="c2"><a class="c3" target="_blank" href="https://gitee.com/wells2333">官方开源</a></li>
+              <li class="c2"><a class="c3" target="_blank" href="https://gitee.com/wells2333/spring-microservice-exam">官方开源</a></li>
               <li class="c2"><a class="c3" target="_blank" href="https://gitee.com/wells2333">前后端项目</a></li>
             </ul>
           </el-col>
           <el-col :span="4" class="footer-col">
             <h3 class="c1">自助服务</h3>
             <ul>
-              <li class="c2"><a class="c3" target="_blank" href="https://gitee.com/wells2333">个人博客</a></li>
+              <li class="c2"><a class="c3" target="_blank" href="http://ehedgehog.net/">个人博客</a></li>
               <li class="c2"><a class="c3" target="_blank" href="https://gitee.com/wells2333">个人简介</a></li>
             </ul>
           </el-col>
           <el-col :span="4" class="footer-col">
             <h3 class="c1">其他项目</h3>
             <ul>
-              <li class="c2"><a class="c3" target="_blank" href="https://gitee.com/wells2333">开发框架</a></li>
+              <li class="c2"><a class="c3" target="_blank" href="http://spring.io/">开发框架</a></li>
               <li class="c2"><a class="c3" target="_blank" href="https://gitee.com/wells2333">小程序工厂</a></li>
             </ul>
           </el-col>
@@ -42,7 +42,7 @@
       </div>
 
       <div class="copyright">
-        <h4 class="content-c2">Copyright ©2018</h4>
+        <h4 class="content-c2">Copyright ©2019</h4>
         <ul class="privacy">
           <li class="content-c1"><a class="content-c0" @click="openLayer">法律声明</a></li>
           <li class="content-c1"><a class="content-c0" @click="openPrivacy">隐私条款</a></li>
@@ -51,8 +51,8 @@
       </div>
       <div class="cop">
         <a class="content-c3" href="https://gitee.com/wells2333" target="_blank">
-          <span class="content-c3">蜀ICP备16050508号-1</span>
-          <span class="content-c3">蜀ICP证16050508号</span>
+          <span class="content-c3">粤ICP备18038322号</span>
+          <span class="content-c3">粤ICP备18038322号-1</span>
         </a>
       </div>
     </div>

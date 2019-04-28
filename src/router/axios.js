@@ -61,6 +61,11 @@ axios.interceptors.response.use(data => {
           location.reload()
         })
       })
+    } else if (error.response.status === 423) {
+      Message({
+        message: '演示环境不能操作',
+        type: 'warning'
+      })
     } else {
       // 其它错误则弹出提示
       const code = error.response.data.code

@@ -80,6 +80,16 @@ export const constantRouterMap = [
         name: 'practice',
         component: () => import('@/views/exam/startPractice')
       },
+      {
+        path: '/account',
+        name: 'account',
+        component: () => import('@/views/personal/account')
+      },
+      {
+        path: '/password',
+        name: 'password',
+        component: () => import('@/views/personal/password')
+      }
     ]
   },
   {

@@ -99,3 +99,16 @@
   background-color: #fff;
   text-align: center;
 }
+
+/* 个人中心 */
+.message-msg {
+  padding-top: 10px;
+  color: #fff;
+  background-color: #fff;
+  text-align: center;
+}
+
+/* 修改密码 */
+.password-msg {
+  @extend .message-msg;
+}

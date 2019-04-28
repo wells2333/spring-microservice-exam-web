@@ -55,3 +55,10 @@ export function delAllObj (obj) {
     data: obj
   })
 }
+
+export function checkExist (username) {
+  return request({
+    url: baseUserUrl + 'checkExist/' + username,
+    method: 'get'
+  })
+}

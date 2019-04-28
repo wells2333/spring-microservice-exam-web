@@ -12,15 +12,15 @@
       <el-tabs v-model="activeName">
         <!-- 注册 -->
         <el-tab-pane label="注册" name="/register" class="login-wrap-title">
-          <el-form ref="registerForm" :model="register.form" :rules="register.rules" class="register-form" auto-complete="on" label-position="left">
+          <el-form ref="registerForm" :model="register.form" :rules="register.rules" class="register-form" label-position="left" auto-complete="off">
             <el-form-item prop="username">
-              <el-input placeholder="用户名" v-model="register.form.username" name="username" type="text" auto-complete="on"/>
+              <el-input placeholder="用户名" v-model="register.form.username" name="username" type="text" auto-complete="off"/>
             </el-form-item>
             <el-form-item prop="name">
-              <el-input placeholder="姓名" v-model="register.form.name" name="name" type="text" auto-complete="on"/>
+              <el-input placeholder="姓名" v-model="register.form.name" name="name" type="text" auto-complete="off"/>
             </el-form-item>
             <el-form-item prop="password">
-              <el-input placeholder="密码" :type="register.passwordType" v-model="register.form.password" name="password" auto-complete="on" @keyup.enter.native="handleRegister"/>
+              <el-input placeholder="密码" :type="register.passwordType" v-model="register.form.password" name="password" auto-complete="off" @keyup.enter.native="handleRegister"/>
             </el-form-item>
             <el-form-item prop="code">
               <el-row :span="24">
@@ -79,12 +79,26 @@
 </template>
 
 <script>
-import { randomLenNum } from '@/utils/util'
+import { randomLenNum, isNotEmpty } from '@/utils/util'
 import { mapGetters } from 'vuex'
 import { getToken } from '@/utils/auth' // getToken from cookie
+import { checkExist } from '@/api/admin/user' // getToken from cookie
 
 export default {
   data () {
+    let checkRegisterUsername = (rule, value, callback) => {
+      if (!isNotEmpty(value)) {
+        return callback(new Error('请输入用户名'))
+      }
+      // 检查用户名是否存在
+      checkExist(value).then(response => {
+        if (isNotEmpty(response.data) && response.data.data) {
+          callback(new Error('用户名已存在！'))
+        } else {
+          callback()
+        }
+      })
+    }
     return {
       activeName: '/login',
       login: {
@@ -124,7 +138,7 @@ export default {
           rememberMe: false
         },
         rules: {
-          username: [{ required: true, trigger: 'blur', message: '请输入用户名' }],
+          username: [{ validator: checkRegisterUsername, trigger: 'blur' }],
           name: [{ required: true, trigger: 'blur', message: '请输入姓名' }],
           password: [
             { required: true, trigger: 'blur', message: '请输入密码' },
@@ -206,7 +220,9 @@ export default {
           this.register.loading = true
           this.$store.dispatch('RegisterByUsername', this.register.form).then(() => {
             this.register.loading = false
-            this.$router.push({ path: '/register' })
+            this.$message.success('注册成功！')
+            this.$router.push({ path: '/login' })
+            location.reload()
           }).catch(() => {
             this.register.loading = false
             this.refreshRegisterCode()

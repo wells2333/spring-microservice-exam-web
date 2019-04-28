@@ -51,10 +51,10 @@
                 <div class="nav-user-list">
                   <ul>
                     <li>
-                      <router-link to="/user/info">个人中心</router-link>
+                      <router-link to="/account">个人中心</router-link>
                     </li>
                     <li>
-                      <router-link to="/user/info">账号设置</router-link>
+                      <router-link to="/password">修改密码</router-link>
                     </li>
                     <li>
                       <a href="javascript:void(-1);" @click="logOut">退出</a>
@@ -144,7 +144,7 @@ export default {
     // 注册
     handleRegister () {
       // 先退出
-      //this.logOut()
+      // this.logOut()
       this.$router.push('/register')
     },
     // 登录
@@ -153,9 +153,14 @@ export default {
     },
     // 登出
     logOut () {
-      this.login = false
-      this.$store.dispatch('LogOut').then(() => {})
-      this.$router.push('/home')
+      this.$store.dispatch('LogOut').then(() => {
+        this.login = false
+        this.$router.push('/home')
+      }).catch(error => {
+        console.error(error)
+        this.login = false
+        this.$router.push('/home')
+      })
     },
     // 检测登录
     checkLogin () {
