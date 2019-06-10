@@ -2,14 +2,14 @@ import request from '@/router/axios'
 
 const baseSubjectBankUrl = '/api/exam/v1/subjectBank/'
 
-export function subjectBankList() {
+export function subjectBankList () {
   return request({
     url: baseSubjectBankUrl + 'subjectBankList',
     method: 'get'
   })
 }
 
-export function fetchSubjectBankList(query) {
+export function fetchSubjectBankList (query) {
   return request({
     url: baseSubjectBankUrl + 'subjectBankList',
     method: 'get',
@@ -17,14 +17,14 @@ export function fetchSubjectBankList(query) {
   })
 }
 
-export function getObj(id) {
+export function getObj (id) {
   return request({
     url: baseSubjectBankUrl + id,
     method: 'get'
   })
 }
 
-export function addSubjectBank(obj) {
+export function addSubjectBank (obj) {
   return request({
     url: baseSubjectBankUrl,
     method: 'post',
@@ -32,7 +32,7 @@ export function addSubjectBank(obj) {
   })
 }
 
-export function putSubjectBank(obj) {
+export function putSubjectBank (obj) {
   return request({
     url: baseSubjectBankUrl,
     method: 'put',
@@ -40,14 +40,14 @@ export function putSubjectBank(obj) {
   })
 }
 
-export function delSubjectBank(id) {
+export function delSubjectBank (id) {
   return request({
     url: baseSubjectBankUrl + id,
     method: 'delete'
   })
 }
 
-export function delAllSubjectBank(obj) {
+export function delAllSubjectBank (obj) {
   return request({
     url: baseSubjectBankUrl + 'deleteAll',
     method: 'post',

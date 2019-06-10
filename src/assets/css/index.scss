@@ -85,8 +85,8 @@
 }
 .top-icon {
   color: #409eff;
-  display: block;
-  line-height: 40px;
+  display: block !important;
+  line-height: 40px !important;
   text-align: center;
   font-size: 18px;
 }

@@ -1,6 +1,6 @@
 {
-  "name": "online-exam-web",
-  "version": "1.0.0",
+  "name": "spring-microservice-exam-web",
+  "version": "3.0.0",
   "description": "A Vue.js project",
   "author": "tangyi <1633736729@qq.com>",
   "private": true,

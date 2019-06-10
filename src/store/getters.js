@@ -17,9 +17,11 @@ const getters = {
   menu: state => state.user.menu,
   isCollapse: state => state.common.isCollapse,
   exam: state => state.exam.exam,
+  subject: state => state.exam.subject,
   examRecord: state => state.exam.examRecord,
   practice: state => state.practice.practice,
   practiceRecord: state => state.practice.practiceRecord,
+  practiceSubject: state => state.practice.practiceSubject,
   course: state => state.course.course,
   sysConfig: state => state.sysConfig.sysConfig
 }

@@ -1,5 +1,4 @@
-import { getObj } from '@/api/exam/exam'
-import { addObj } from '@/api/exam/examRecord'
+import { start } from '@/api/exam/examRecord'
 import {setStore, getStore} from '@/utils/store'
 import { submit } from '@/api/exam/answer'
 
@@ -10,28 +9,23 @@ const exam = {
     }) || {},
     examRecord: getStore({
       name: 'examRecord'
+    }) || {},
+    subject: getStore({
+      name: 'subject'
     }) || {}
   },
   actions: {
-    GetExamInfo ({ commit, state }, exam) {
-      return new Promise((resolve, reject) => {
-        getObj(exam.id).then(response => {
-          commit('SET_EXAM', response.data.data)
-          resolve(response)
-        }).catch(error => {
-          reject(error)
-        })
-      })
+    // 设置题目信息
+    SetSubjectInfo ({ commit, state }, subject) {
+      commit('SET_SUBJECT', subject)
     },
-    // 设置考试信息
-    SetExamInfo ({ commit, state}, exam) {
-      commit('SET_EXAM', exam)
-    },
-    // 新增考试记录
-    AddExamRecordInfo ({ commit, state }, examRecord) {
+    // 开始考试
+    StartExam ({ commit, state }, examRecord) {
       return new Promise((resolve, reject) => {
-        addObj(examRecord).then(response => {
-          commit('SET_EXAM_RECORD', response.data.data)
+        start(examRecord).then(response => {
+          commit('SET_EXAM', response.data.data.examination)
+          commit('SET_EXAM_RECORD', response.data.data.examRecord)
+          commit('SET_SUBJECT', response.data.data.subjectDto)
           resolve(response)
         }).catch(error => {
           reject(error)
@@ -54,16 +48,21 @@ const exam = {
       state.exam = exam
       setStore({
         name: 'exam',
-        content: state.exam,
-        type: 'session'
+        content: state.exam
       })
     },
     SET_EXAM_RECORD: (state, examRecord) => {
       state.examRecord = examRecord
       setStore({
         name: 'examRecord',
-        content: state.examRecord,
-        type: 'session'
+        content: state.examRecord
+      })
+    },
+    SET_SUBJECT: (state, subject) => {
+      state.subject = subject
+      setStore({
+        name: 'subject',
+        content: state.subject
       })
     }
   }

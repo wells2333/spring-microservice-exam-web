@@ -1,5 +1,6 @@
 import CryptoJS from 'crypto-js'
 import { ATTACHMENT_URL } from '@/config/attachment'
+import { TENANT_CODE } from '../../config/prod.env'
 
 /**
  * 加密处理
@@ -119,7 +120,7 @@ export const getDownloadUrl = (attachmentId) => {
  * @param fastFileId
  * @returns {string}
  */
-export const getAttachmentPreviewUrl = function(sysConfig, fastFileId) {
+export const getAttachmentPreviewUrl = function (sysConfig, fastFileId) {
   let url = ''
   if (isNotEmpty(sysConfig.fdfsHttpHost)) {
     url = sysConfig.fdfsHttpHost + '/' + fastFileId
@@ -168,4 +169,12 @@ export const notifySuccess = (obj, msg) => {
  */
 export const notifyFail = (obj, msg) => {
   notify(obj, '失败', msg, 'error', 2000)
+}
+
+/**
+ * 获取租户code
+ * @returns {*}
+ */
+export const getTenantCode = () => {
+  return TENANT_CODE
 }

@@ -50,15 +50,14 @@
 </template>
 <script>
 import { mapState } from 'vuex'
-import { saveOrUpdate } from '@/api/exam/answer'
-import { getSubjectAnswer } from '@/api/exam/subject'
+import { saveAndNext } from '@/api/exam/answer'
 import store from '@/store'
-import { notifySuccess, notifyFail } from '@/utils/util'
+import { notifySuccess, notifyFail, isNotEmpty } from '@/utils/util'
 
 export default {
   data () {
     return {
-      loading: true,
+      loading: false,
       currentTime: 0,
       startTime: 0,
       endTime: 0,
@@ -102,7 +101,8 @@ export default {
     ...mapState({
       userInfo: state => state.user.userInfo,
       practice: state => state.practice.practice,
-      practiceRecord: state => state.practice.practiceRecord
+      practiceRecord: state => state.practice.practiceRecord,
+      practiceSubject: state => state.practice.practiceSubject
     })
   },
   created () {
@@ -118,26 +118,26 @@ export default {
   methods: {
     // 开始考试
     startPractice () {
-      this.$confirm('确定要开始吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }).then(() => {
-        // 获取服务器的当前时间
-        this.currentTime = parseInt(this.practice.currentTime)
-        // 考试开始时间
-        this.startTime = parseInt(this.practice.startTime)
-        // 考试已经考试
-        this.startTime = this.currentTime
-        // 开启提交按钮
-        this.disableSubmit = false
-        // 考试结束时间
-        this.endTime = parseInt(this.practice.endTime)
-        // 加载题目和答题
-        this.getSubjectAndAnswer(this.query)
-      }).catch(() => {
-        this.$router.push({name: 'practices'})
-      })
+      // 获取服务器的当前时间
+      this.currentTime = parseInt(this.practice.currentTime)
+      // 考试开始时间
+      this.startTime = parseInt(this.practice.startTime)
+      // 考试已经考试
+      this.startTime = this.currentTime
+      // 题目数
+      this.practice.totalSubject = parseInt(this.practice.totalSubject)
+      // 开启提交按钮
+      this.disableSubmit = false
+      // 考试结束时间
+      this.endTime = parseInt(this.practice.endTime)
+      // 初始化题目和答题
+      this.tempSubject = this.practiceSubject
+      // 答题
+      this.tempAnswer = this.tempSubject.answer
+      // 选项
+      this.option = isNotEmpty(this.tempAnswer) ? this.tempAnswer.answer : ''
+      // 题号
+      this.query.serialNumber = parseInt(this.practiceSubject.serialNumber)
     },
     // 上一题
     last () {
@@ -149,35 +149,34 @@ export default {
           duration: 2000
         })
       } else {
-        // 先回退题目序号
-        this.query.serialNumber--
-        // 加载题目
-        this.getSubjectAndAnswer(this.query)
+        // 题目序号减一
+        this.query.serialNumber = parseInt(this.query.serialNumber) - 1
+        // 保存当前题目，同时加载下一题
+        this.saveCurrentSubjectAndGetNextSubject()
       }
     },
     // 下一题
     next () {
-      // 提交到后台
+      // 增加序号
+      this.query.serialNumber = parseInt(this.query.serialNumber) + 1
+      // 保存当前题目，同时加载下一题
+      this.saveCurrentSubjectAndGetNextSubject()
+    },
+    // 保存当前题目，同时根据序号加载下一题
+    saveCurrentSubjectAndGetNextSubject () {
+      this.loading = true
+      let answerId = isNotEmpty(this.tempAnswer) ? this.tempAnswer.id : ''
       let answer = {
-        id: this.tempAnswer.id,
+        id: answerId,
         userId: this.userInfo.id,
         examinationId: this.practice.id,
         examRecordId: this.practiceRecord.id,
         subjectId: this.tempSubject.id,
-        answer: this.option
+        answer: this.option,
+        serialNumber: this.query.serialNumber // 下一题的序号
       }
-      saveOrUpdate(answer).then(response => {
-        console.log('提交成功')
-      }).catch(() => {
-        console.log('提交失败')
-      })
-      this.query.serialNumber++
-      this.getSubjectAndAnswer(this.query)
-    },
-    // 加载题目和答题
-    getSubjectAndAnswer (query) {
-      this.loading = true
-      getSubjectAnswer(query).then(response => {
+      // 提交到后台
+      saveAndNext(answer).then(response => {
         if (response.data.data === null) {
           this.$notify({
             title: '提示',
@@ -185,17 +184,19 @@ export default {
             type: 'warn',
             duration: 2000
           })
-          this.query.serialNumber--
-          this.loading = false
+          this.query.serialNumber = parseInt(this.query.serialNumber) - 1
         } else {
           // 题目内容
           this.tempSubject = response.data.data
           // 答题
-          this.tempAnswer = this.tempSubject.answer
+          this.tempAnswer = response.data.data.answer
           // 选项
-          this.option = this.tempAnswer.answer
-          this.loading = false
+          this.option = isNotEmpty(this.tempAnswer) ? this.tempAnswer.answer : ''
+          // 保存题目答案到localStorage
+          this.practiceSubject.answer = this.tempAnswer
+          store.dispatch('SetPracticeSubjectInfo', this.tempSubject).then(() => {})
         }
+        this.loading = false
       }).catch(() => {
         notifyFail(this, '加载题目失败')
         this.loading = false
@@ -206,9 +207,10 @@ export default {
       this.dialogVisible = true
     },
     // 跳转题目
-    toSubject (subject, index) {
-      this.query.serialNumber = index
-      this.getSubjectAndAnswer(this.query)
+    toSubject (index) {
+      this.query.serialNumber = parseInt(index)
+      // 保存当前题目，同时加载下一题
+      this.saveCurrentSubjectAndGetNextSubject()
       this.dialogVisible = false
     },
     // 提交
@@ -219,12 +221,12 @@ export default {
         type: 'warning'
       }).then(() => {
         // 提交到后台
-        store.dispatch('SubmitPractice', { examinationId: this.practice.id, examRecordId: this.practiceRecord.id, userId: this.userInfo.id }).then(res => {
+        store.dispatch('SubmitPractice', { examinationId: this.practice.id, examRecordId: this.practiceRecord.id, userId: this.userInfo.id }).then(() => {
           notifySuccess(this, '提交成功')
           // 禁用提交按钮
           this.disableSubmit = true
           this.$router.push({name: 'score', query: {type: 'practice'}})
-        }).catch((err) => {
+        }).catch(() => {
           notifyFail(this, '提交失败')
         })
       })

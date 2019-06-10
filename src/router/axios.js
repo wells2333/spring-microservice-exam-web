@@ -68,12 +68,10 @@ axios.interceptors.response.use(data => {
       })
     } else {
       // 其它错误则弹出提示
-      const code = error.response.data.code
-      const errMsg = errorCode[code] || errorCode['default']
-      Message({
-        message: errMsg,
-        type: 'error'
-      })
+      const { code, data } = error.response.data
+      const errMsg = data || errorCode[code] || errorCode['default']
+      // TODO 跳转到对应的404、500提示页面
+      Message({ message: errMsg, type: 'error' })
     }
   }
   return Promise.reject(new Error(error))

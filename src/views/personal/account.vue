@@ -134,7 +134,7 @@ export default {
     })
   },
   methods: {
-    update() {
+    update () {
       this.$refs['form'].validate((valid) => {
         if (valid) {
           updateObjInfo(this.userInfo).then(response => {
@@ -149,7 +149,7 @@ export default {
         }
       })
     },
-    handleAvatarSuccess(res, file) {
+    handleAvatarSuccess (res, file) {
       if (!isNotEmpty(res.data) || !isNotEmpty(res.data.fastFileId)) {
         notifyFail(this, '头像上传失败')
         return
@@ -194,7 +194,7 @@ export default {
         }
       })
     },
-    beforeAvatarUpload(file) {
+    beforeAvatarUpload (file) {
       const isJPG = file.type === 'image/jpeg' || file.type === 'image/png'
       const isLt2M = file.size / 1024 / 1024 < 2
       if (!isJPG) {

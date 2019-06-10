@@ -2,7 +2,7 @@ import request from '@/router/axios'
 
 const baseSubjectCategoryUrl = '/api/exam/v1/subjectCategory/'
 
-export function fetchTree(query) {
+export function fetchTree (query) {
   return request({
     url: baseSubjectCategoryUrl + 'categories',
     method: 'get',
@@ -10,7 +10,7 @@ export function fetchTree(query) {
   })
 }
 
-export function addObj(obj) {
+export function addObj (obj) {
   return request({
     url: baseSubjectCategoryUrl,
     method: 'post',
@@ -18,25 +18,24 @@ export function addObj(obj) {
   })
 }
 
-export function getObj(id) {
+export function getObj (id) {
   return request({
     url: baseSubjectCategoryUrl + id,
     method: 'get'
   })
 }
 
-export function delObj(id) {
+export function delObj (id) {
   return request({
     url: baseSubjectCategoryUrl + id,
     method: 'delete'
   })
 }
 
-export function putObj(obj) {
+export function putObj (obj) {
   return request({
     url: baseSubjectCategoryUrl,
     method: 'put',
     data: obj
   })
 }
-

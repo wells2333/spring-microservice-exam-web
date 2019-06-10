@@ -1,12 +1,12 @@
-
 // 网关地址
-const baseUrl = 'http://127.0.0.1:8000';
+const GATEWAY_HOST = process.env.GATEWAY_HOST || '127.0.0.1'
+const GATEWAY_PORT = process.env.GATEWAY_PORT || '8000'
 
 // 转发配置
 module.exports = {
   proxyList: {
     '/api': {
-      target: baseUrl,
+      target: 'http://' + GATEWAY_HOST + ':' + GATEWAY_PORT,
       changeOrigin: true,
       pathRewrite: {
         '^/api': '/api'

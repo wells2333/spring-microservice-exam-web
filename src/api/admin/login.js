@@ -5,8 +5,8 @@ const baseAuthenticationUrl = '/api/auth/v1/authentication/'
 
 const basicAuthorization = 'Basic ' + btoa('web_app:spring-microservice-exam-secret')
 
-export function loginByUsername (username, password, code, randomStr) {
-  const grant_type = 'password'
+export function loginByUsername (username, password, code, randomStr, tenantCode) {
+  const grantType = 'password'
   const scope = 'read'
   return request({
     url: '/api/auth/oauth/token',
@@ -14,15 +14,15 @@ export function loginByUsername (username, password, code, randomStr) {
       'Authorization': basicAuthorization
     },
     method: 'post',
-    params: {username, password, randomStr, code, grant_type, scope}
+    params: {username, password, randomStr, code, grant_type: grantType, scope, tenantCode}
   })
 }
 
-export function registerByUsername (username, name, password, code, randomStr) {
+export function registerByUsername (username, name, password, code, randomStr, tenantCode) {
   return request({
     url: '/api/user/v1/user/register',
     method: 'post',
-    params: {username, name, password, randomStr, code}
+    params: {username, name, password, randomStr, code, tenantCode}
   })
 }
 
@@ -43,17 +43,17 @@ export function getUserInfo (token) {
 /**
  * 刷新token
  */
-export function refreshToken() {
+export function refreshToken () {
   //  grant_type为refresh_token
-  const grant_type = 'refresh_token'
+  const grantType = 'refresh_token'
   const scope = 'read'
-  const refresh_token = getRefreshToken()
+  const refreshToken = getRefreshToken()
   return request({
     url: '/api/auth/oauth/token',
     headers: {
       'Authorization': basicAuthorization
     },
     method: 'post',
-    params: { grant_type, scope, refresh_token }
+    params: { grant_type: grantType, scope, refresh_token: refreshToken }
   })
 }

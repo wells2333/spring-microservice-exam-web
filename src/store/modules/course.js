@@ -24,8 +24,7 @@ const course = {
       state.course = course
       setStore({
         name: 'course',
-        content: state.course,
-        type: 'session'
+        content: state.course
       })
     }
   }

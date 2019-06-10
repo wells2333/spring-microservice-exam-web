@@ -6,20 +6,30 @@
           <div class="subject-exam-title" v-if="!loading && tempSubject.id !== ''">{{exam.examinationName}}（共{{exam.totalSubject}}题，合计{{exam.totalScore}}分）</div>
           <div class="subject-content" v-if="!loading && tempSubject.id !== ''">
             <div class="subject-title">
-              <span class="subject-title-number">{{tempSubject.serialNumber}} .</span>
-              {{tempSubject.subjectName}}（{{tempSubject.score}}分）
+              <span class="subject-title-number">{{tempSubject.serialNumber}}.&nbsp;</span>
+              <span class="subject-title-content" v-html="tempSubject.subjectName"></span>
+              <span class="subject-title-content">&nbsp;({{tempSubject.score}})分</span>
             </div>
-            <div class="subject-option">
-              <el-radio v-model="option" label="A">A. {{tempSubject.optionA}}</el-radio>
-            </div>
-            <div class="subject-option">
-              <el-radio v-model="option" label="B">B. {{tempSubject.optionB}}</el-radio>
-            </div>
-            <div class="subject-option">
-              <el-radio v-model="option" label="C">C. {{tempSubject.optionC}}</el-radio>
-            </div>
-            <div class="subject-option">
-              <el-radio v-model="option" label="D">D. {{tempSubject.optionD}}</el-radio>
+            <ul v-if="tempSubject.type === '0'" class="subject-options">
+              <li class="subject-option">
+                <input :checked="option === 'A'" class="toggle" type="checkbox" @change="toggleOption('A')">
+                <label @click="toggleOption('A')"><span class="subject-option-prefix">A.&nbsp;</span><span v-html="tempSubject.optionA" class="subject-option-prefix"></span></label>
+              </li>
+              <li class="subject-option">
+                <input :checked="option === 'B'" class="toggle" type="checkbox" @change="toggleOption('B')">
+                <label @click="toggleOption('B')"><span class="subject-option-prefix">B.&nbsp;</span><span v-html="tempSubject.optionB" class="subject-option-prefix"></span></label>
+              </li>
+              <li class="subject-option">
+                <input :checked="option === 'C'" class="toggle" type="checkbox" @change="toggleOption('C')">
+                <label @click="toggleOption('C')"><span class="subject-option-prefix">C.&nbsp;</span><span v-html="tempSubject.optionC" class="subject-option-prefix"></span></label>
+              </li>
+              <li class="subject-option">
+                <input :checked="option === 'D'" class="toggle" type="checkbox" @change="toggleOption('D')">
+                <label @click="toggleOption('D')"><span class="subject-option-prefix">D.&nbsp;</span><span v-html="tempSubject.optionD" class="subject-option-prefix"></span></label>
+              </li>
+            </ul>
+            <div v-if="tempSubject.type === '3'" class="subject-answer">
+              <el-input :autosize="{ minRows: 15, maxRows: 30}" v-model="answer" type="textarea"/>
             </div>
           </div>
           <div class="subject-buttons" v-if="!loading && tempSubject.id !== ''">
@@ -50,7 +60,7 @@
       <div class="answer-card-title" >{{exam.examinationName}}（共{{exam.totalSubject}}题，合计{{exam.totalScore}}分）</div>
       <div class="answer-card-split"></div>
       <el-row class="answer-card-content">
-        <el-button circle v-for="index in exam.totalSubject" :key="index" @click="toSubject(index)">&nbsp;{{index}}&nbsp;</el-button>
+        <el-button circle v-for="index in exam.totalSubject" :key="index" @click="toSubject(index)" >&nbsp;{{index}}&nbsp;</el-button>
       </el-row>
     </el-dialog>
   </div>
@@ -58,11 +68,11 @@
 <script>
 import { mapState, mapGetters } from 'vuex'
 import CountDown from 'vue2-countdown'
-import { getSubjectAnswer } from '@/api/exam/subject'
-import { saveOrUpdate } from '@/api/exam/answer'
+import { saveAndNext } from '@/api/exam/answer'
+import { getCurrentTime } from '@/api/exam/examRecord'
 import store from '@/store'
 import moment from 'moment'
-import { notifySuccess, notifyFail } from '@/utils/util'
+import { notifySuccess, notifyFail, isNotEmpty } from '@/utils/util'
 
 export default {
   components: {
@@ -70,7 +80,7 @@ export default {
   },
   data () {
     return {
-      loading: true,
+      loading: false,
       currentTime: 0,
       startTime: 0,
       endTime: 0,
@@ -98,6 +108,7 @@ export default {
         userId: ''
       },
       option: '',
+      answer: '',
       dialogVisible: false,
       tempAnswer: {
         id: '',
@@ -116,7 +127,7 @@ export default {
       examRecord: state => state.exam.examRecord
     }),
     ...mapGetters([
-      'exam'
+      'exam', 'subject'
     ])
   },
   created () {
@@ -140,10 +151,9 @@ export default {
     },
     // 开始考试
     startExam () {
-      // 查询考试信息
-      store.dispatch('GetExamInfo', this.exam).then(res => {
-        // 校验考试时间
-        const currentTime = moment(this.exam.currentTime)
+      // 校验考试时间
+      getCurrentTime().then(response => {
+        const currentTime = moment(response.data.data)
         if (currentTime.isAfter(this.exam.endTime)) {
           this.$notify({
             title: '提示',
@@ -169,16 +179,18 @@ export default {
           // 题目数
           this.exam.totalSubject = parseInt(this.exam.totalSubject)
           this.disableSubmit = false
-          // 加载题目和答题
-          this.getSubjectAndAnswer(this.query)
+          // 初始化题目和答题
+          this.tempSubject = this.subject
+          // 答题
+          this.tempAnswer = this.tempSubject.answer
+          // 选项
+          this.option = isNotEmpty(this.tempAnswer) ? this.tempAnswer.optionAnswer : ''
+          this.answer = isNotEmpty(this.tempAnswer) ? this.tempAnswer.answer : ''
+          // 题号
+          this.query.serialNumber = parseInt(this.subject.serialNumber)
         }
-      }).catch((err) => {
-        this.$notify({
-          title: '提示',
-          message: '获取考试信息失败',
-          type: 'warn',
-          duration: 2000
-        })
+      }).catch(() => {
+        notifyFail(this, '开始考试失败！')
       })
     },
     // 考试结束
@@ -202,35 +214,27 @@ export default {
           duration: 2000
         })
       } else {
-        // 先回退题目序号
-        this.query.serialNumber--
-        // 加载题目
-        this.getSubjectAndAnswer(this.query)
+        // 题目序号减一
+        this.query.serialNumber = parseInt(this.query.serialNumber) - 1
+        // 保存当前题目，同时加载下一题
+        this.saveCurrentSubjectAndGetNextSubject()
       }
     },
     // 下一题
     next () {
-      // 提交到后台
-      let answer = {
-        id: this.tempAnswer.id,
-        userId: this.userInfo.id,
-        examinationId: this.exam.id,
-        examRecordId: this.examRecord.id,
-        subjectId: this.tempSubject.id,
-        answer: this.option
-      }
-      saveOrUpdate(answer).then(response => {
-        console.log('提交成功')
-      }).catch(() => {
-        console.log('提交失败')
-      })
-      this.query.serialNumber++
-      this.getSubjectAndAnswer(this.query)
+      // 增加序号
+      this.query.serialNumber = parseInt(this.query.serialNumber) + 1
+      // 保存当前题目，同时加载下一题
+      this.saveCurrentSubjectAndGetNextSubject()
     },
-    // 加载题目和答题
-    getSubjectAndAnswer (query) {
+    // 保存当前题目，同时根据序号加载下一题
+    saveCurrentSubjectAndGetNextSubject () {
       this.loading = true
-      getSubjectAnswer(query).then(response => {
+      let answerId = isNotEmpty(this.tempAnswer) ? this.tempAnswer.id : ''
+      // 构造答案
+      let answer = this.getAnswer(answerId)
+      // 提交到后台
+      saveAndNext(answer).then(response => {
         if (response.data.data === null) {
           this.$notify({
             title: '提示',
@@ -238,17 +242,24 @@ export default {
             type: 'warn',
             duration: 2000
           })
-          this.query.serialNumber--
-          this.loading = false
+          this.query.serialNumber = parseInt(this.query.serialNumber) - 1
         } else {
           // 题目内容
           this.tempSubject = response.data.data
           // 答题
-          this.tempAnswer = this.tempSubject.answer
-          // 选项
-          this.option = this.tempAnswer.answer
-          this.loading = false
+          this.tempAnswer = response.data.data.answer
+          // 选择题选项
+          if (this.tempSubject.type === '0') {
+            this.option = isNotEmpty(this.tempAnswer) ? this.tempAnswer.optionAnswer : ''
+          } else if (this.tempSubject.type === '3') {
+            // 简答题答案
+            this.answer = isNotEmpty(this.tempAnswer) ? this.tempAnswer.answer : ''
+          }
+          // 保存题目答案到localStorage
+          this.subject.answer = this.tempAnswer
+          store.dispatch('SetSubjectInfo', this.tempSubject).then(() => {})
         }
+        this.loading = false
       }).catch(() => {
         notifyFail(this, '加载题目失败')
         this.loading = false
@@ -260,8 +271,9 @@ export default {
     },
     // 跳转题目
     toSubject (index) {
-      this.query.serialNumber = index
-      this.getSubjectAndAnswer(this.query)
+      this.query.serialNumber = parseInt(index)
+      // 保存当前题目，同时加载下一题
+      this.saveCurrentSubjectAndGetNextSubject()
       this.dialogVisible = false
     },
     // 提交
@@ -272,15 +284,38 @@ export default {
         type: 'warning'
       }).then(() => {
         // 提交到后台
-        store.dispatch('SubmitExam', { examinationId: this.exam.id, examRecordId: this.examRecord.id, userId: this.userInfo.id }).then(res => {
+        store.dispatch('SubmitExam', { examinationId: this.exam.id, examRecordId: this.examRecord.id, userId: this.userInfo.id }).then(() => {
           notifySuccess(this, '提交成功')
           // 禁用提交按钮
           this.disableSubmit = true
-          this.$router.push({name: 'score', query: {type: 'exam'}})
-        }).catch((err) => {
+          this.$router.push({name: 'exam-record'})
+        }).catch(() => {
           notifyFail(this, '提交失败')
         })
       })
+    },
+    // 选中选项
+    toggleOption (option) {
+      this.option = option
+    },
+    // 根据题目类型返回填写的答案
+    getAnswer (answerId) {
+      let answer = {
+        id: answerId,
+        userId: this.userInfo.id,
+        examinationId: this.exam.id,
+        examRecordId: this.examRecord.id,
+        subjectId: this.tempSubject.id,
+        serialNumber: this.query.serialNumber // 下一题的序号
+      }
+      // 简答题
+      if (this.tempSubject.type === '3') {
+        answer.answer = this.answer
+      } else {
+        answer.optionAnswer = this.option
+      }
+      // 选择题
+      return answer
     }
   }
 }
@@ -300,35 +335,81 @@ export default {
       line-height: 25px;
       padding: 18px 20px;
       border-bottom: 1px solid #DEDEDE;
+      margin-bottom: 12px;
     }
     .subject {
       padding-left: 30px;
       padding-right: 75px;
     }
     .subject-content{
-      padding: 30px 0;
+      margin: 0 auto ;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      font-weight: 300;
+      background: #fff;
+      z-index: 1;
       position: relative;
     }
     /* 题目 */
     .subject-title {
-      font-size: 16px;
+      font-size: 18px;
       line-height: 22px;
-      margin-bottom: 10px;
-      padding-left: 20px;
-      position: relative;
       .subject-title-number {
-        position: absolute;
-        left: -25px;
-        top: 0;
         display: inline-block;
-        width: 40px;
         line-height: 22px;
-        text-align: right;
+      }
+      .subject-title-content {
+        display: inline-block;
       }
     }
-    /* 题目选项 */
-    .subject-option {
-      padding: 10px 15px 10px 45px;
+    .subject-options {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      > li {
+        position: relative;
+        font-size: 24px;
+        .toggle {
+          opacity: 0;
+          text-align: center;
+          width: 35px;
+          /* auto, since non-WebKit browsers doesn't support input styling */
+          height: auto;
+          position: absolute;
+          top: 0;
+          bottom: 0;
+          margin: auto 0;
+          border: none;
+          /* Mobile Safari */
+          -webkit-appearance: none;
+          appearance: none;
+        }
+        .toggle+label {
+          background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%22-10%20-18%20100%20135%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22none%22%20stroke%3D%22%23ededed%22%20stroke-width%3D%223%22/%3E%3C/svg%3E');
+          background-repeat: no-repeat;
+          background-position: center left;
+          background-size: 30px;
+        }
+        .toggle:checked+label {
+          background-size: 30px;
+          background-image: url('data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2240%22%20height%3D%2240%22%20viewBox%3D%22-10%20-18%20100%20135%22%3E%3Ccircle%20cx%3D%2250%22%20cy%3D%2250%22%20r%3D%2250%22%20fill%3D%22none%22%20stroke%3D%22%23bddad5%22%20stroke-width%3D%223%22/%3E%3Cpath%20fill%3D%22%235dc2af%22%20d%3D%22M72%2025L42%2071%2027%2056l-4%204%2020%2020%2034-52z%22/%3E%3C/svg%3E');
+        }
+        label {
+          word-break: break-all;
+          padding: 10px 10px 10px 45px;
+          display: block;
+          line-height: 1.0;
+          transition: color 0.4s;
+        }
+        /* 选项名称 */
+        .subject-option-prefix {
+          font-size: 16px;
+          display: inline-block
+        }
+      }
+    }
+    .subject-answer {
+      padding: 16px;
     }
   }
   .subject-buttons {

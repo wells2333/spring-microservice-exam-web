@@ -56,9 +56,10 @@ export function delAllObj (obj) {
   })
 }
 
-export function checkExist (username) {
+export function checkExist (username, tenantCode) {
   return request({
     url: baseUserUrl + 'checkExist/' + username,
-    method: 'get'
+    method: 'get',
+    params: { tenantCode }
   })
 }

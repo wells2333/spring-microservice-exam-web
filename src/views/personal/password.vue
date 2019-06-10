@@ -98,7 +98,7 @@ export default {
     })
   },
   methods: {
-    update() {
+    update () {
       this.$refs['form'].validate((valid) => {
         if (valid) {
           if (this.userInfo.username === 'admin') {

@@ -1,7 +1,7 @@
 import {loginByUsername, registerByUsername, logout, getUserInfo} from '@/api/admin/login'
 import { setToken, removeToken, setRefreshToken, removeRefreshToken } from '@/utils/auth'
-import {setStore, getStore} from '@/utils/store'
-import {encryption, getAttachmentPreviewUrl, isNotEmpty} from '@/utils/util'
+import { setStore, getStore } from '@/utils/store'
+import { encryption, getAttachmentPreviewUrl, isNotEmpty, getTenantCode } from '@/utils/util'
 
 const user = {
   state: {
@@ -37,7 +37,8 @@ const user = {
           param: ['password']
         })
 
-        loginByUsername(user.username, user.password, user.code, user.randomStr).then(response => {
+        // 根据用户名、密码、租户code登录
+        loginByUsername(user.username, user.password, user.code, user.randomStr, getTenantCode()).then(response => {
           const data = response.data
           setToken(data.access_token)
           setRefreshToken(data.refresh_token)
@@ -56,7 +57,7 @@ const user = {
           key: '1234567887654321',
           param: ['password']
         })
-        registerByUsername(user.username, user.name, user.password, user.code, user.randomStr).then(response => {
+        registerByUsername(user.username, user.name, user.password, user.code, user.randomStr, getTenantCode()).then(response => {
           resolve()
         }).catch(error => {
           reject(error)
@@ -123,36 +124,32 @@ const user = {
     }
   },
   mutations: {
-    SET_ACCESS_TOKEN: (state, access_token) => {
-      state.access_token = access_token
+    SET_ACCESS_TOKEN: (state, accessToken) => {
+      state.access_token = accessToken
       setStore({
         name: 'access_token',
-        content: state.access_token,
-        type: 'session'
+        content: state.access_token
       })
     },
     SET_USER_INFO: (state, userInfo) => {
       state.userInfo = userInfo
       setStore({
         name: 'userInfo',
-        content: state.userInfo,
-        type: 'session'
+        content: state.userInfo
       })
     },
     SET_REFRESH_TOKEN: (state, rfToken) => {
       state.refresh_token = rfToken
       setStore({
         name: 'refresh_token',
-        content: state.refresh_token,
-        type: 'session'
+        content: state.refresh_token
       })
     },
     SET_ROLES: (state, roles) => {
       state.roles = roles
       setStore({
         name: 'roles',
-        content: state.roles,
-        type: 'session'
+        content: state.roles
       })
     },
     SET_PERMISSIONS: (state, permissions) => {
@@ -163,8 +160,7 @@ const user = {
       state.permissions = list
       setStore({
         name: 'permissions',
-        content: state.permissions,
-        type: 'session'
+        content: state.permissions
       })
     }
   }

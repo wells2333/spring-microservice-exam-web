@@ -1,5 +1,4 @@
-import { getObj } from '@/api/exam/exam'
-import { addObj } from '@/api/exam/examRecord'
+import { start } from '@/api/exam/examRecord'
 import {setStore, getStore} from '@/utils/store'
 import { submit } from '@/api/exam/answer'
 
@@ -10,24 +9,23 @@ const practice = {
     }) || {},
     practiceRecord: getStore({
       name: 'practiceRecord'
+    }) || {},
+    practiceSubject: getStore({
+      name: 'practiceSubject'
     }) || {}
   },
   actions: {
-    GetPracticeInfo ({ commit, state }, practice) {
-      return new Promise((resolve, reject) => {
-        getObj(practice.id).then(response => {
-          commit('SET_PRACTICE', response.data.data)
-          resolve(response)
-        }).catch(error => {
-          reject(error)
-        })
-      })
+    // 设置题目信息
+    SetPracticeSubjectInfo ({ commit, state }, practiceSubject) {
+      commit('SET_PRACTICE_SUBJECT', practiceSubject)
     },
-    // 新增练习记录
-    AddPracticeRecordInfo ({ commit, state }, practiceRecord) {
+    // 开始练习
+    StartPractice ({ commit, state }, practiceRecord) {
       return new Promise((resolve, reject) => {
-        addObj(practiceRecord).then(response => {
-          commit('SET_PRACTICE_RECORD', response.data.data)
+        start(practiceRecord).then(response => {
+          commit('SET_PRACTICE', response.data.data.examination)
+          commit('SET_PRACTICE_RECORD', response.data.data.examRecord)
+          commit('SET_PRACTICE_SUBJECT', response.data.data.subjectDto)
           resolve(response)
         }).catch(error => {
           reject(error)
@@ -50,16 +48,21 @@ const practice = {
       state.practice = practice
       setStore({
         name: 'practice',
-        content: state.practice,
-        type: 'session'
+        content: state.practice
       })
     },
     SET_PRACTICE_RECORD: (state, practiceRecord) => {
       state.practiceRecord = practiceRecord
       setStore({
         name: 'practiceRecord',
-        content: state.practiceRecord,
-        type: 'session'
+        content: state.practiceRecord
+      })
+    },
+    SET_PRACTICE_SUBJECT: (state, practiceSubject) => {
+      state.practiceSubject = practiceSubject
+      setStore({
+        name: 'practiceSubject',
+        content: state.practiceSubject
       })
     }
   }

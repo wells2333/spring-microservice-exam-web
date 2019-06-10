@@ -79,7 +79,7 @@
 </template>
 
 <script>
-import { randomLenNum, isNotEmpty } from '@/utils/util'
+import { randomLenNum, isNotEmpty, getTenantCode } from '@/utils/util'
 import { mapGetters } from 'vuex'
 import { getToken } from '@/utils/auth' // getToken from cookie
 import { checkExist } from '@/api/admin/user' // getToken from cookie
@@ -91,7 +91,7 @@ export default {
         return callback(new Error('请输入用户名'))
       }
       // 检查用户名是否存在
-      checkExist(value).then(response => {
+      checkExist(value, getTenantCode()).then(response => {
         if (isNotEmpty(response.data) && response.data.data) {
           callback(new Error('用户名已存在！'))
         } else {

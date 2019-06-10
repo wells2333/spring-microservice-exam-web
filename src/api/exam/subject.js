@@ -2,14 +2,14 @@ import request from '@/router/axios'
 
 const baseSubjectUrl = '/api/exam/v1/subject/'
 
-export function subjectList() {
+export function subjectList () {
   return request({
     url: baseSubjectUrl + 'subjectList',
     method: 'get'
   })
 }
 
-export function fetchSubjectList(query) {
+export function fetchSubjectList (query) {
   return request({
     url: baseSubjectUrl + 'subjectList',
     method: 'get',
@@ -17,14 +17,14 @@ export function fetchSubjectList(query) {
   })
 }
 
-export function getObj(id) {
+export function getObj (id) {
   return request({
     url: baseSubjectUrl + id,
     method: 'get'
   })
 }
 
-export function addSubject(obj) {
+export function addSubject (obj) {
   return request({
     url: baseSubjectUrl,
     method: 'post',
@@ -32,7 +32,7 @@ export function addSubject(obj) {
   })
 }
 
-export function putSubject(obj) {
+export function putSubject (obj) {
   return request({
     url: baseSubjectUrl,
     method: 'put',
@@ -40,14 +40,14 @@ export function putSubject(obj) {
   })
 }
 
-export function delSubject(id) {
+export function delSubject (id) {
   return request({
     url: baseSubjectUrl + id,
     method: 'delete'
   })
 }
 
-export function delAllSubject(obj) {
+export function delAllSubject (obj) {
   return request({
     url: baseSubjectUrl + 'deleteAll',
     method: 'post',
@@ -55,7 +55,7 @@ export function delAllSubject(obj) {
   })
 }
 
-export function getSubjectAnswer(obj) {
+export function getSubjectAnswer (obj) {
   return request({
     url: baseSubjectUrl + 'subjectAnswer',
     method: 'get',

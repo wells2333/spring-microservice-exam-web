@@ -256,7 +256,7 @@ export default {
     text-transform: uppercase;
     font-size: 14px;
     font-weight: 700;
-    padding: 12px 20px 12px 19px;
+    padding: 12px 20px 0px 19px;
     border: 1px solid transparent;
     bottom: -1px;
     -moz-transition: none;

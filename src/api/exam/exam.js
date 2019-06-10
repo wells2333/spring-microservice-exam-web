@@ -2,7 +2,7 @@ import request from '@/router/axios'
 
 const baseExaminationUrl = '/api/exam/v1/examination/'
 
-export function fetchList(query) {
+export function fetchList (query) {
   return request({
     url: baseExaminationUrl + 'examinationList',
     method: 'get',
@@ -10,7 +10,7 @@ export function fetchList(query) {
   })
 }
 
-export function getObj(id, query) {
+export function getObj (id, query) {
   return request({
     url: baseExaminationUrl + id,
     method: 'get',
@@ -18,7 +18,7 @@ export function getObj(id, query) {
   })
 }
 
-export function addObj(obj) {
+export function addObj (obj) {
   return request({
     url: baseExaminationUrl,
     method: 'post',
@@ -26,7 +26,7 @@ export function addObj(obj) {
   })
 }
 
-export function putObj(obj) {
+export function putObj (obj) {
   return request({
     url: baseExaminationUrl,
     method: 'put',
@@ -34,14 +34,14 @@ export function putObj(obj) {
   })
 }
 
-export function delObj(id) {
+export function delObj (id) {
   return request({
     url: baseExaminationUrl + id,
     method: 'delete'
   })
 }
 
-export function delAllObj(obj) {
+export function delAllObj (obj) {
   return request({
     url: baseExaminationUrl + 'deleteAll',
     method: 'post',

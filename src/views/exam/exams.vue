@@ -5,20 +5,43 @@
         <h1>所有考试</h1>
       </el-col>
     </el-row>
-    <el-row :gutter="100" v-loading="listLoading">
-      <el-col :span="6" v-for="(exam, index) in examList" :key="exam.id" :offset="(index === 0 || index % 3 === 0) ? 2 : 0">
-        <el-card :body-style="{ padding: '12px' }">
-          <img :src="getAvatar(exam.avatar)" v-if="exam.avatar" class="exam-image">
-          <img src="../../../static/images/home/icon_function3.jpg" v-else class="exam-image">
-          <div style="padding: 14px;">
-            <span>{{ exam.examinationName }}</span>
-            <div class="exam-bottom">
-              <time class="exam-time">开始时间：{{ exam.startTime }}</time>
-              <el-button type="text" class="exam-button" @click="startExam(exam)">开始考试</el-button>
-            </div>
-          </div>
-        </el-card>
-      </el-col>
+    <el-row :gutter="40" class="exams" v-loading="listLoading">
+      <div style="margin: 0 60px;">
+        <el-col :xs="12" :sm="12" :lg="6" class="exams-col" v-for="(exam) in examList" :key="exam.id">
+          <el-card class="exam-panel">
+            <el-row>
+              <el-col :span="24">
+                <div class="exam-panel-div" title="">
+                  <img v-if="exam.avatar" :src="getAvatar(exam.avatar)" :alt="exam.examinationName" class="exam-avatar">
+                  <img v-else src="../../../static/images/home/default_exam.png" :alt="exam.examinationName" class="exam-avatar">
+                </div>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="24">
+                <div class="exam-panel-exam-name" title="">
+                  <el-tag type="success" size="small">{{ exam.course !== undefined && exam.course !== null ? exam.course.courseName : '' }}</el-tag>
+                </div>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="24">
+                <div class="exam-panel-exam-course" title=""><span class="exam-panel-exam-course-span">{{exam.examinationName}}</span></div>
+              </el-col>
+            </el-row>
+            <el-row>
+              <el-col :span="24">
+                <div class="exam-panel-bottom">
+                  <time class="exam-time">开始时间：{{ exam.startTime }}</time>
+                  <br>
+                  <time class="exam-time">结束时间：{{exam.endTime}}</time>
+                  <el-button type="text" class="exam-button" @click="startExam(exam)">开始考试</el-button>
+                </div>
+              </el-col>
+            </el-row>
+          </el-card>
+        </el-col>
+      </div>
       <el-col v-if="!listLoading && examList.length === 0" :span="24">
         <p class="exam-empty">暂无更多数据</p>
       </el-col>
@@ -28,18 +51,32 @@
 <script>
 import { mapState } from 'vuex'
 import { fetchList } from '@/api/exam/exam'
-import { isNotEmpty, getAttachmentPreviewUrl } from '@/utils/util'
+import { getCurrentTime } from '@/api/exam/examRecord'
+import { isNotEmpty, notifyFail, getAttachmentPreviewUrl } from '@/utils/util'
 import store from '@/store'
 import moment from 'moment'
+import PanThumb from '@/components/PanThumb'
 
 export default {
+  components: { PanThumb },
+  filters: {
+    examTypeFilter (type) {
+      const typeMap = {
+        0: '正式考试',
+        1: '模拟考试',
+        2: '在线练习'
+      }
+      return typeMap[type]
+    }
+  },
   data () {
     return {
       listLoading: true,
       examList: [],
       query: {
         courseId: '',
-        status: '0'
+        status: '0',
+        type: '0'
       },
       tempExamRecord: {
         id: '',
@@ -84,36 +121,35 @@ export default {
     startExam (exam) {
       this.tempExamRecord.examinationId = exam.id
       this.tempExamRecord.userId = this.userInfo.id
-      // 校验考试时间
-      const currentTime = moment(exam.currentTime)
-      // 校验结束时间
-      if (currentTime.isAfter(exam.endTime)) {
-        this.$notify({
-          title: '提示',
-          message: '考试已结束',
-          type: 'warn',
-          duration: 2000
-        })
-      } else if (currentTime.isBefore(exam.startTime)) {
-        // 考试未开始
-        this.$notify({
-          title: '提示',
-          message: '考试未开始',
-          type: 'warn',
-          duration: 2000
-        })
-      } else {
-        this.$confirm('确定要开始吗?', '提示', {
-          confirmButtonText: '确定',
-          cancelButtonText: '取消',
-          type: 'warning'
-        }).then(() => {
-          // 暂存考试信息
-          store.dispatch('SetExamInfo', exam).then(res => {
-            // 创建考试记录
-            store.dispatch('AddExamRecordInfo', this.tempExamRecord).then(res => {
+      getCurrentTime().then(response => {
+        // 校验考试时间
+        const currentTime = moment(response.data.data)
+        // 校验结束时间
+        if (currentTime.isAfter(exam.endTime)) {
+          this.$notify({
+            title: '提示',
+            message: '考试已结束',
+            type: 'warn',
+            duration: 2000
+          })
+        } else if (currentTime.isBefore(exam.startTime)) {
+          // 考试未开始
+          this.$notify({
+            title: '提示',
+            message: '考试未开始',
+            type: 'warn',
+            duration: 2000
+          })
+        } else {
+          this.$confirm('确定要开始吗?', '提示', {
+            confirmButtonText: '确定',
+            cancelButtonText: '取消',
+            type: 'warning'
+          }).then(() => {
+            // 开始考试
+            store.dispatch('StartExam', this.tempExamRecord).then(() => {
               this.$router.push({name: 'start'})
-            }).catch((err) => {
+            }).catch(() => {
               this.$notify({
                 title: '提示',
                 message: '开始考试失败',
@@ -121,9 +157,13 @@ export default {
                 duration: 2000
               })
             })
+          }).catch(() => {
+            console.log('取消考试')
           })
-        })
-      }
+        }
+      }).catch(() => {
+        notifyFail(this, '开始考试失败！')
+      })
     },
     getAvatar (avatar) {
       return getAttachmentPreviewUrl(this.sysConfig, avatar)
@@ -138,25 +178,59 @@ export default {
   .exam-msg {
     @extend %message-common;
   }
-  .exam-image {
-    width: 100%;
-    display: block;
-    cursor: pointer;
-  }
-  .el-col {
-    margin-bottom: 40px;
-  }
-  .exam-bottom {
-    margin-top: 13px;
-    line-height: 12px;
-  }
-  .exam-button {
-    padding: 0;
-    float: right;
-  }
-  .exam-time {
-    font-size: 13px;
-    color: #999;
+  .exams {
+    .exams-col{
+      margin-bottom: 32px;
+    }
+    .exam-panel {
+      margin: 0 20px 20px 0;
+      padding: 0;
+      position: relative;
+      .icon-people {
+        color: #40c9c6;
+      }
+      .exam-panel-course {
+        position: relative;
+        display: inline-block;
+        margin: 12px;
+      }
+      .exam-panel-div {
+        border-radius: 0px;
+        overflow: hidden;
+        position: relative;
+      }
+      .exam-panel-exam-name {
+        padding: 2px;
+      }
+      .exam-panel-exam-course {
+        padding: 0;
+      }
+      .exam-panel-bottom {
+        .exam-button {
+          padding: 0;
+          float: right;
+        }
+        .exam-time {
+          font-size: 13px;
+          color: #999;
+        }
+      }
+      .exam-avatar {
+        width: 100%;
+        height: 100%;
+        max-width: 400px;
+        max-height: 300px;
+        display: block;
+        border-style: none;
+        cursor: pointer;
+        border-radius: 0;
+        transition: all 0.2s linear;
+        &:hover {
+          transform: scale(1.1, 1.1);
+          filter: contrast(130%);
+        }
+      }
+    }
   }
   .exam-empty {
     font-size: 13px;

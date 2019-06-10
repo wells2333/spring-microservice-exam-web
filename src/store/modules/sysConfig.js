@@ -9,7 +9,7 @@ const sysConfig = {
   },
   actions: {
     // 获取系统配置
-    GetSysConfig({ commit }) {
+    GetSysConfig ({ commit }) {
       return new Promise((resolve, reject) => {
         getSysConfig().then(response => {
           const data = response.data.data
@@ -26,11 +26,9 @@ const sysConfig = {
       state.sysConfig = sysConfig
       setStore({
         name: 'sys_config',
-        content: state.sysConfig,
-        type: 'session'
+        content: state.sysConfig
       })
     }
   }
 }
 export default sysConfig
-
