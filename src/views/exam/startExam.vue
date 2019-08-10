@@ -3,39 +3,39 @@
     <el-row :gutter="30">
       <el-col :span="18" :offset="2">
         <el-card class="subject-box-card" v-loading="loading">
-          <div class="subject-exam-title" v-if="!loading && tempSubject.id !== ''">{{exam.examinationName}}（共{{exam.totalSubject}}题，合计{{exam.totalScore}}分）</div>
+          <div class="subject-exam-title" v-if="!loading && tempSubject.id !== ''">{{exam.examinationName}}（共{{exam.subjectCount}}题，合计{{exam.totalScore}}分）</div>
           <div class="subject-content" v-if="!loading && tempSubject.id !== ''">
             <div class="subject-title">
               <span class="subject-title-number">{{tempSubject.serialNumber}}.&nbsp;</span>
               <span class="subject-title-content" v-html="tempSubject.subjectName"></span>
               <span class="subject-title-content">&nbsp;({{tempSubject.score}})分</span>
             </div>
-            <ul v-if="tempSubject.type === '0'" class="subject-options">
+            <ul v-if="tempSubject.type === 0" class="subject-options">
               <li class="subject-option">
-                <input :checked="option === 'A'" class="toggle" type="checkbox" @change="toggleOption('A')">
-                <label @click="toggleOption('A')"><span class="subject-option-prefix">A.&nbsp;</span><span v-html="tempSubject.optionA" class="subject-option-prefix"></span></label>
+                <input :checked="answer === 'A'" class="toggle" type="checkbox" @change="toggleOption('A')">
+                <label @click="toggleOption('A')"><span class="subject-option-prefix">A.&nbsp;</span><span v-html="tempSubject.options[0].optionContent" class="subject-option-prefix"></span></label>
               </li>
               <li class="subject-option">
-                <input :checked="option === 'B'" class="toggle" type="checkbox" @change="toggleOption('B')">
-                <label @click="toggleOption('B')"><span class="subject-option-prefix">B.&nbsp;</span><span v-html="tempSubject.optionB" class="subject-option-prefix"></span></label>
+                <input :checked="answer === 'B'" class="toggle" type="checkbox" @change="toggleOption('B')">
+                <label @click="toggleOption('B')"><span class="subject-option-prefix">B.&nbsp;</span><span v-html="tempSubject.options[1].optionContent" class="subject-option-prefix"></span></label>
               </li>
               <li class="subject-option">
-                <input :checked="option === 'C'" class="toggle" type="checkbox" @change="toggleOption('C')">
-                <label @click="toggleOption('C')"><span class="subject-option-prefix">C.&nbsp;</span><span v-html="tempSubject.optionC" class="subject-option-prefix"></span></label>
+                <input :checked="answer === 'C'" class="toggle" type="checkbox" @change="toggleOption('C')">
+                <label @click="toggleOption('C')"><span class="subject-option-prefix">C.&nbsp;</span><span v-html="tempSubject.options[2].optionContent" class="subject-option-prefix"></span></label>
               </li>
               <li class="subject-option">
-                <input :checked="option === 'D'" class="toggle" type="checkbox" @change="toggleOption('D')">
-                <label @click="toggleOption('D')"><span class="subject-option-prefix">D.&nbsp;</span><span v-html="tempSubject.optionD" class="subject-option-prefix"></span></label>
+                <input :checked="answer === 'D'" class="toggle" type="checkbox" @change="toggleOption('D')">
+                <label @click="toggleOption('D')"><span class="subject-option-prefix">D.&nbsp;</span><span v-html="tempSubject.options[3].optionContent" class="subject-option-prefix"></span></label>
               </li>
             </ul>
-            <div v-if="tempSubject.type === '3'" class="subject-answer">
-              <el-input :autosize="{ minRows: 15, maxRows: 30}" v-model="answer" type="textarea"/>
+            <div v-if="tempSubject.type === 1" class="subject-answer">
+              <tinymce ref="answerEditor" :height="300" v-model="answer"/>
             </div>
           </div>
           <div class="subject-buttons" v-if="!loading && tempSubject.id !== ''">
             <el-button plain @click="last">上一题</el-button>
-            <el-button v-if="tempSubject.serialNumber !== exam.totalSubject" plain @click="next">下一题</el-button>
-            <el-button v-if="tempSubject.serialNumber !== 0 && tempSubject.serialNumber === exam.totalSubject" type="success" @click="submitExam" v-bind:disabled="disableSubmit">提交</el-button>
+            <el-button v-if="tempSubject.serialNumber !== subjectCount" plain @click="next">下一题</el-button>
+            <el-button v-if="tempSubject.serialNumber !== 0 && tempSubject.serialNumber === subjectCount" type="success" @click="submitExam" v-bind:disabled="disableSubmit">提交</el-button>
           </div>
         </el-card>
       </el-col>
@@ -48,7 +48,7 @@
           </div>
         </div>
         <div class="current-progress">
-          当前进度: {{tempSubject.serialNumber}}/{{exam.totalSubject}}
+          当前进度: {{tempSubject.serialNumber}}/{{subjectCount}}
         </div>
         <div class="answer-card">
           <el-button type="text" icon="el-icon-date" @click="answerCard">答题卡</el-button>
@@ -57,10 +57,10 @@
       </el-col>
     </el-row>
     <el-dialog title="答题卡" :visible.sync="dialogVisible" width="50%" top="10vh" center>
-      <div class="answer-card-title" >{{exam.examinationName}}（共{{exam.totalSubject}}题，合计{{exam.totalScore}}分）</div>
+      <div class="answer-card-title" >{{exam.examinationName}}（共{{subjectCount}}题，合计{{exam.totalScore}}分）</div>
       <div class="answer-card-split"></div>
       <el-row class="answer-card-content">
-        <el-button circle v-for="index in exam.totalSubject" :key="index" @click="toSubject(index)" >&nbsp;{{index}}&nbsp;</el-button>
+        <el-button circle v-for="index in subjectCount" :key="index" @click="toSubject(index)" >&nbsp;{{index}}&nbsp;</el-button>
       </el-row>
     </el-dialog>
   </div>
@@ -69,14 +69,17 @@
 import { mapState, mapGetters } from 'vuex'
 import CountDown from 'vue2-countdown'
 import { saveAndNext } from '@/api/exam/answer'
+import { getSubjectCount } from '@/api/exam/exam'
 import { getCurrentTime } from '@/api/exam/examRecord'
 import store from '@/store'
 import moment from 'moment'
 import { notifySuccess, notifyFail, isNotEmpty } from '@/utils/util'
+import Tinymce from '@/components/Tinymce'
 
 export default {
   components: {
-    CountDown
+    CountDown,
+    Tinymce
   },
   data () {
     return {
@@ -87,18 +90,26 @@ export default {
       disableSubmit: true,
       tempSubject: {
         id: '',
+        serialNumber: 1,
         examinationId: '',
+        categoryId: 0,
         subjectName: '',
         type: 0,
-        content: '',
-        optionA: '',
-        optionB: '',
-        optionC: '',
-        optionD: '',
-        optionE: '',
-        optionF: '',
-        answer: '',
-        score: '',
+        choicesType: 0,
+        options: [
+          { subjectChoicesId: '', optionName: 'A', optionContent: '' },
+          { subjectChoicesId: '', optionName: 'B', optionContent: '' },
+          { subjectChoicesId: '', optionName: 'C', optionContent: '' },
+          { subjectChoicesId: '', optionName: 'D', optionContent: '' }
+        ],
+        answer: {
+          subjectId: '',
+          answer: '',
+          answerType: '',
+          score: '',
+          type: 0
+        },
+        score: 5,
         analysis: '',
         level: 2
       },
@@ -116,8 +127,10 @@ export default {
         examinationId: '',
         courseId: '',
         subjectId: '',
-        answer: ''
-      }
+        answer: '',
+        type: 0
+      },
+      subjectCount: 0
     }
   },
   computed: {
@@ -170,24 +183,26 @@ export default {
             duration: 2000
           })
         } else {
+          // 获取考试的题目数量
+          getSubjectCount(this.exam.id).then(response => {
+            // 题目数
+            this.subjectCount = response.data.data
+          })
           // 获取服务器的当前时间
           this.currentTime = currentTime.valueOf()
           // 考试开始时间
           this.startTime = this.currentTime
           // 考试结束时间
           this.endTime = moment(this.exam.endTime).valueOf()
-          // 题目数
-          this.exam.totalSubject = parseInt(this.exam.totalSubject)
           this.disableSubmit = false
           // 初始化题目和答题
           this.tempSubject = this.subject
           // 答题
           this.tempAnswer = this.tempSubject.answer
           // 选项
-          this.option = isNotEmpty(this.tempAnswer) ? this.tempAnswer.optionAnswer : ''
-          this.answer = isNotEmpty(this.tempAnswer) ? this.tempAnswer.answer : ''
+          this.answer = this.tempAnswer.answer || ''
           // 题号
-          this.query.serialNumber = parseInt(this.subject.serialNumber)
+          this.query.serialNumber = this.subject.serialNumber
         }
       }).catch(() => {
         notifyFail(this, '开始考试失败！')
@@ -215,7 +230,7 @@ export default {
         })
       } else {
         // 题目序号减一
-        this.query.serialNumber = parseInt(this.query.serialNumber) - 1
+        this.query.serialNumber--
         // 保存当前题目，同时加载下一题
         this.saveCurrentSubjectAndGetNextSubject()
       }
@@ -223,7 +238,7 @@ export default {
     // 下一题
     next () {
       // 增加序号
-      this.query.serialNumber = parseInt(this.query.serialNumber) + 1
+      this.query.serialNumber++
       // 保存当前题目，同时加载下一题
       this.saveCurrentSubjectAndGetNextSubject()
     },
@@ -236,25 +251,14 @@ export default {
       // 提交到后台
       saveAndNext(answer).then(response => {
         if (response.data.data === null) {
-          this.$notify({
-            title: '提示',
-            message: '已经是最后一题了',
-            type: 'warn',
-            duration: 2000
-          })
-          this.query.serialNumber = parseInt(this.query.serialNumber) - 1
+          notifySuccess(this, '已经是最后一题了')
+          this.query.serialNumber--
         } else {
           // 题目内容
           this.tempSubject = response.data.data
           // 答题
           this.tempAnswer = response.data.data.answer
-          // 选择题选项
-          if (this.tempSubject.type === '0') {
-            this.option = isNotEmpty(this.tempAnswer) ? this.tempAnswer.optionAnswer : ''
-          } else if (this.tempSubject.type === '3') {
-            // 简答题答案
-            this.answer = isNotEmpty(this.tempAnswer) ? this.tempAnswer.answer : ''
-          }
+          this.answer = isNotEmpty(this.tempAnswer) ? this.tempAnswer.answer : ''
           // 保存题目答案到localStorage
           this.subject.answer = this.tempAnswer
           store.dispatch('SetSubjectInfo', this.tempSubject).then(() => {})
@@ -271,7 +275,7 @@ export default {
     },
     // 跳转题目
     toSubject (index) {
-      this.query.serialNumber = parseInt(index)
+      this.query.serialNumber = index
       // 保存当前题目，同时加载下一题
       this.saveCurrentSubjectAndGetNextSubject()
       this.dialogVisible = false
@@ -283,39 +287,40 @@ export default {
         cancelButtonText: '取消',
         type: 'warning'
       }).then(() => {
-        // 提交到后台
-        store.dispatch('SubmitExam', { examinationId: this.exam.id, examRecordId: this.examRecord.id, userId: this.userInfo.id }).then(() => {
-          notifySuccess(this, '提交成功')
-          // 禁用提交按钮
-          this.disableSubmit = true
-          this.$router.push({name: 'exam-record'})
+        let answerId = isNotEmpty(this.tempAnswer) ? this.tempAnswer.id : ''
+        // 构造答案
+        let answer = this.getAnswer(answerId)
+        saveAndNext(answer).then(response => {
+          // 提交到后台
+          store.dispatch('SubmitExam', { examinationId: this.exam.id, examRecordId: this.examRecord.id, userId: this.userInfo.id }).then(() => {
+            notifySuccess(this, '提交成功')
+            // 禁用提交按钮
+            this.disableSubmit = true
+            this.$router.push({name: 'exam-record'})
+          }).catch(() => {
+            notifyFail(this, '提交失败')
+          })
         }).catch(() => {
-          notifyFail(this, '提交失败')
+          notifyFail(this, '提交题目失败')
         })
       })
     },
     // 选中选项
-    toggleOption (option) {
-      this.option = option
+    toggleOption (answer) {
+      this.answer = answer
     },
     // 根据题目类型返回填写的答案
     getAnswer (answerId) {
-      let answer = {
+      return {
         id: answerId,
         userId: this.userInfo.id,
         examinationId: this.exam.id,
         examRecordId: this.examRecord.id,
         subjectId: this.tempSubject.id,
-        serialNumber: this.query.serialNumber // 下一题的序号
+        answer: this.answer,
+        type: this.tempSubject.type,
+        serialNumber: this.query.serialNumber
       }
-      // 简答题
-      if (this.tempSubject.type === '3') {
-        answer.answer = this.answer
-      } else {
-        answer.optionAnswer = this.option
-      }
-      // 选择题
-      return answer
     }
   }
 }

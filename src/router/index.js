@@ -79,6 +79,16 @@ export const constantRouterMap = [
         path: '/password',
         name: 'password',
         component: () => import('@/views/personal/password')
+      },
+      {
+        path: '/incorrect',
+        name: 'incorrect',
+        component: () => import('@/views/exam/incorrect')
+      },
+      {
+        path: '/reset-password',
+        name: 'reset-password',
+        component: () => import('@/views/personal/resetPassword')
       }
     ]
   },

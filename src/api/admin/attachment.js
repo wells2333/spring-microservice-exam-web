@@ -24,6 +24,13 @@ export function getObj (id) {
   })
 }
 
+export function preview (id) {
+  return request({
+    url: baseAttachmentUrl + id + '/preview',
+    method: 'get'
+  })
+}
+
 export function addObj (obj) {
   return request({
     url: baseAttachmentUrl,

@@ -23,6 +23,8 @@ const getters = {
   practiceRecord: state => state.practice.practiceRecord,
   practiceSubject: state => state.practice.practiceSubject,
   course: state => state.course.course,
-  sysConfig: state => state.sysConfig.sysConfig
+  sysConfig: state => state.sysConfig.sysConfig,
+  tenantCode: state => state.user.tenantCode,
+  incorrectRecord: state => state.exam.incorrectRecord
 }
 export default getters

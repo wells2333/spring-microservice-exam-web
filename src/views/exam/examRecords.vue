@@ -32,7 +32,7 @@
           </el-table-column>
           <el-table-column label="考试时间" sortable prop="start_time" min-width="90" align="center">
             <template slot-scope="scope">
-              <span>{{ scope.row.startTime }}</span>
+              <span>{{ scope.row.startTime | timeFilter }}</span>
             </template>
           </el-table-column>
           <el-table-column label="状态" min-width="90" align="center">
@@ -47,8 +47,8 @@
           </el-table-column>
           <el-table-column label="操作" align="center">
             <template slot-scope="scope">
-              <el-button type="success" size="mini" @click="handleDetail(scope.row)" :disabled="parseInt(scope.row.submitStatus) !== 3">成绩详情</el-button>
-              <el-button type="danger" size="mini" @click="incorrectAnswer(scope.row)" :disabled="parseInt(scope.row.submitStatus) !== 3">查看错题</el-button>
+              <el-button type="success" size="mini" @click="handleDetail(scope.row)" :disabled="scope.row.submitStatus !== 3">成绩详情</el-button>
+              <el-button type="danger" size="mini" @click="incorrectAnswer(scope.row)" :disabled="scope.row.submitStatus !== 3">查看错题</el-button>
             </template>
           </el-table-column>
         </el-table>
@@ -66,49 +66,11 @@
             <span>考试成绩</span>
           </div>
           <div class="score">
-            <h4>成绩: <span type="success">{{tempScore.score}}</span></h4>
-            <h4>正确题数: <span type="success">{{tempScore.correctNumber}}</span></h4>
-            <h4>错误题数: <span type="success">{{tempScore.inCorrectNumber}}</span></h4>
-            <h4>开始时间: <span type="success">{{tempScore.startTime}}</span></h4>
-            <h4>结束时间: <span type="success">{{tempScore.endTime}}</span></h4>
-          </div>
-        </el-col>
-      </el-row>
-    </el-dialog>
-
-    <!-- 错题 -->
-    <el-dialog :visible.sync="dialogIncorrectAnswerVisible" :title="'错题（共' + incorrectAnswerList.length + '道）'" width="80%" top="10vh">
-      <el-row>
-        <el-col :span="24">
-          <div class="subject-content" v-for="tempSubject in incorrectAnswerList" :key="tempSubject.id">
-            <div class="subject-content-option">
-              <div class="subject-title">
-                <span class="subject-title-number">{{tempSubject.serialNumber}} .</span>
-                {{tempSubject.subjectName}}（{{tempSubject.score}}分）
-              </div>
-              <div class="subject-option" :class="getClass(tempSubject.answer, tempSubject.incorrectAnswer, 'A')">
-                A. {{tempSubject.optionA}}
-              </div>
-              <div class="subject-option" :class="getClass(tempSubject.answer, tempSubject.incorrectAnswer, 'B')">
-                B. {{tempSubject.optionB}}
-              </div>
-              <div class="subject-option" :class="getClass(tempSubject.answer, tempSubject.incorrectAnswer, 'C')">
-                C. {{tempSubject.optionC}}
-              </div>
-              <div class="subject-option" :class="getClass(tempSubject.answer, tempSubject.incorrectAnswer, 'D')">
-                D. {{tempSubject.optionD}}
-              </div>
-            </div>
-            <p class="subject-content-answer">
-              参考答案：{{tempSubject.answer}}
-            </p>
-            <p class="subject-content-analysis">
-              解析：{{tempSubject.analysis}}
-            </p>
-          </div>
-          <div v-if="incorrectAnswerList.length === 0" style="text-align: center">暂无更多数据</div>
-          <div class="pagination-container">
-            <el-pagination v-show="incorrectAnswerList.length>0" :current-page="incorrectAnswerQuery.pageNum" :page-sizes="[10,20,30, 50]" :page-size="incorrectAnswerQuery.pageSize" :total="incorrectAnswerList.length" background layout="total, sizes, prev, pager, next, jumper" @size-change="handleIncorrectSizeChange" @current-change="handleIncorrectSizeCurrentChange"/>
+            <h4>成绩: <span type="success">{{ tempScore.score }}</span></h4>
+            <h4>正确题数: <span type="success">{{ tempScore.correctNumber }}</span></h4>
+            <h4>错误题数: <span type="success">{{ tempScore.inCorrectNumber }}</span></h4>
+            <h4>开始时间: <span type="success">{{ tempScore.startTime  | timeFilter }}</span></h4>
+            <h4>结束时间: <span type="success">{{ tempScore.endTime  | timeFilter }}</span></h4>
           </div>
         </el-col>
       </el-row>
@@ -118,8 +80,8 @@
 <script>
 import { mapState } from 'vuex'
 import { fetchList } from '@/api/exam/examRecord'
-import { getIncorrectAnswerList } from '@/api/exam/incorrectAnswer'
-import { notifyFail } from '@/utils/util'
+import store from '@/store'
+import { formatDate } from '@/utils/util'
 
 export default {
   filters: {
@@ -135,8 +97,8 @@ export default {
       const typeMap = {
         0: '未提交',
         1: '已提交',
-        2: '正在统计',
-        3: '统计完成'
+        2: '待批改',
+        3: '批改完成'
       }
       return typeMap[type]
     },
@@ -148,6 +110,9 @@ export default {
         3: 'success'
       }
       return statusMap[status]
+    },
+    timeFilter (time) {
+      return formatDate(new Date(time), 'yyyy-MM-dd hh:mm')
     }
   },
   data () {
@@ -155,6 +120,7 @@ export default {
       examRecodeList: [],
       total: 0,
       listLoading: true,
+      dialogDetailVisible: false,
       tableKey: 0,
       listQuery: {
         pageNum: 1,
@@ -163,22 +129,10 @@ export default {
         sort: 'id',
         order: 'descending'
       },
-      dialogDetailVisible: false,
       tempScore: {
         score: '',
         correctNumber: '',
         inCorrectNumber: ''
-      },
-      dialogIncorrectAnswerVisible: false,
-      incorrectAnswerList: [],
-      incorrectAnswerQuery: {
-        examRecordId: '',
-        userId: '',
-        sort: 'serial_number',
-        order: ' asc',
-        pageNum: 1,
-        pageSize: 5,
-        total: 0
       }
     }
   },
@@ -218,16 +172,6 @@ export default {
       this.listQuery.pageNum = val
       this.getList()
     },
-    handleIncorrectSizeChange (val) {
-      this.incorrectAnswerQuery.limit = val
-      this.incorrectAnswerQuery.userId = this.userInfo.id
-      this.getIncorrectList()
-    },
-    handleIncorrectSizeCurrentChange (val) {
-      this.incorrectAnswerQuery.pageNum = val
-      this.incorrectAnswerQuery.userId = this.userInfo.id
-      this.getIncorrectList()
-    },
     // 查看成绩详情
     handleDetail (row) {
       this.tempScore = row
@@ -235,30 +179,11 @@ export default {
     },
     // 查看错题
     incorrectAnswer (row) {
-      // 加载错题
-      this.incorrectAnswerQuery.examRecordId = row.id
-      this.incorrectAnswerQuery.userId = this.userInfo.id
-      this.getIncorrectList()
-    },
-    // 加载错题类表
-    getIncorrectList () {
-      getIncorrectAnswerList(this.incorrectAnswerQuery).then(response => {
-        this.incorrectAnswerList = response.data.list
-        this.incorrectAnswerQuery.total = response.data.total
-        this.dialogIncorrectAnswerVisible = true
-      }).catch(() => {
-        notifyFail(this, '加载错题失败')
+      store.dispatch('SetIncorrectRecord', { id: row.id }).then(() => {
+        this.$router.push({ name: 'incorrect' })
+      }).catch((error) => {
+        console.error(error)
       })
-    },
-    getClass (answer, incorrectAnswer, option) {
-      // 和参考答案一样
-      if (answer === incorrectAnswer && incorrectAnswer === option) {
-        return 'right'
-      } else if (answer !== incorrectAnswer && incorrectAnswer === option) {
-        return 'correct'
-      } else {
-        return ''
-      }
     }
   }
 }

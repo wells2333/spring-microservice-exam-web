@@ -18,6 +18,14 @@ export function getObj (id, query) {
   })
 }
 
+export function getSubjectCount (id, query) {
+  return request({
+    url: baseExaminationUrl + id + '/subjectCount',
+    method: 'get',
+    params: query
+  })
+}
+
 export function addObj (obj) {
   return request({
     url: baseExaminationUrl,

@@ -5,7 +5,7 @@ const baseAuthenticationUrl = '/api/auth/v1/authentication/'
 
 const basicAuthorization = 'Basic ' + btoa('web_app:spring-microservice-exam-secret')
 
-export function loginByUsername (username, password, code, randomStr, tenantCode) {
+export function loginByUsername (identifier, credential, code, randomStr) {
   const grantType = 'password'
   const scope = 'read'
   return request({
@@ -14,15 +14,34 @@ export function loginByUsername (username, password, code, randomStr, tenantCode
       'Authorization': basicAuthorization
     },
     method: 'post',
-    params: {username, password, randomStr, code, grant_type: grantType, scope, tenantCode}
+    params: {username: identifier, credential, randomStr, code, grant_type: grantType, scope}
   })
 }
 
-export function registerByUsername (username, name, password, code, randomStr, tenantCode) {
+/**
+ * 根据手机号登录
+ * @param social
+ * @param code
+ */
+export function loginBySocial (social, code) {
+  const grantType = 'mobile'
+  const scope = 'read'
+  return request({
+    url: '/api/auth/mobile/token',
+    headers: {
+      'Authorization': basicAuthorization
+    },
+    method: 'post',
+    params: {mobile: social, code, grant_type: grantType, scope}
+  })
+}
+
+export function registerByUsername (identifier, email, credential, code, randomStr) {
   return request({
     url: '/api/user/v1/user/register',
     method: 'post',
-    params: {username, name, password, randomStr, code, tenantCode}
+    params: {identifier, email, credential, randomStr, code},
+    data: {identifier, email, credential}
   })
 }
 

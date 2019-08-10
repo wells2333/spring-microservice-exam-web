@@ -42,7 +42,7 @@
             </router-link>
           </el-col>
           <el-col :span="8">
-            <router-link to="/home">
+            <router-link to="/incorrect">
               <img class="img" src="../../../static/images/home/icon_function5.jpg">
               <div class="msg-text">错题记录</div>
               <div class="msg-text-detail">收录错误的题目</div>

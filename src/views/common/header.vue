@@ -44,7 +44,7 @@
             </div>
             <div class="username" v-if="login">
               <a href="javascript:void(-1);">
-                {{userInfo.name}}
+                {{userInfo.identifier}}
               </a>
               <i class="el-icon-caret-bottom"></i>
               <div class="nav-user-wrapper">
@@ -164,7 +164,7 @@ export default {
     },
     // 检测登录
     checkLogin () {
-      if (this.userInfo.username !== undefined) {
+      if (this.userInfo.id !== undefined) {
         this.login = true
       }
     }

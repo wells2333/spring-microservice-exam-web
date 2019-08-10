@@ -39,7 +39,6 @@
 import { mapState } from 'vuex'
 import { fetchList } from '@/api/exam/exam'
 import { getAttachmentPreviewUrl } from '@/utils/util'
-import store from '@/store'
 
 export default {
   data () {
@@ -84,18 +83,18 @@ export default {
     },
     // 开始练习
     startPractice (practice) {
-      this.tempExamRecord.examinationId = practice.id
-      this.tempExamRecord.userId = this.userInfo.id
-      store.dispatch('StartPractice', this.tempExamRecord).then(() => {
-        this.$router.push({name: 'practice'})
-      }).catch(() => {
-        this.$notify({
-          title: '提示',
-          message: '开始练习失败',
-          type: 'warn',
-          duration: 2000
-        })
-      })
+      // this.tempExamRecord.examinationId = practice.id
+      // this.tempExamRecord.userId = this.userInfo.id
+      // store.dispatch('StartPractice', this.tempExamRecord).then(() => {
+      //   this.$router.push({name: 'practice'})
+      // }).catch(() => {
+      //   this.$notify({
+      //     title: '提示',
+      //     message: '开始练习失败',
+      //     type: 'warn',
+      //     duration: 2000
+      //   })
+      // })
     }
   }
 }

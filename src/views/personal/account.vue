@@ -13,8 +13,8 @@
               <el-col :span="12">
                 <el-row>
                   <el-col :span="24">
-                    <el-form-item label="账号：" prop="username">
-                      <el-input :disabled="disabled" v-model="userInfo.username"/>
+                    <el-form-item label="账号：" prop="identifier">
+                      <el-input :disabled="disabled" v-model="userInfo.identifier"/>
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -38,7 +38,7 @@
                 <el-row>
                   <el-col :span="24">
                     <el-form-item label="出生日期" prop="born">
-                      <el-date-picker v-model="userInfo.born" type="date" format="yyyy 年 MM 月 dd 日" value-format="yyyy-MM-dd" placeholder="出生日期"/>
+                      <el-date-picker v-model="userInfo.born" format="yyyy 年 MM 月 dd 日" value-format="timestamp" placeholder="出生日期"/>
                     </el-form-item>
                   </el-col>
                 </el-row>
@@ -94,13 +94,13 @@
   </div>
 </template>
 <script>
-import { updateObjInfo } from '@/api/admin/user'
+import { updateObjInfo, updateAvatar } from '@/api/admin/user'
 import OHeader from '../common/header'
 import OFooter from '../common/footer'
 import { getToken } from '@/utils/auth'
 import { mapState } from 'vuex'
-import { delAttachment } from '@/api/admin/attachment'
-import { getAttachmentPreviewUrl, isNotEmpty, notifySuccess, notifyFail } from '@/utils/util'
+import { preview } from '@/api/admin/attachment'
+import { isNotEmpty, notifySuccess, notifyFail } from '@/utils/util'
 import store from '@/store'
 
 export default {
@@ -109,8 +109,7 @@ export default {
       labelPosition: 'right',
       disabled: true,
       rules: {
-        name: [{ required: true, message: '请输入账号', trigger: 'change' }],
-        username: [{ required: true, message: '请输入姓名', trigger: 'change' }]
+        identifier: [{ required: true, message: '请输入账号', trigger: 'change' }]
       },
       headers: {
         Authorization: 'Bearer ' + getToken()
@@ -125,7 +124,6 @@ export default {
     OFooter
   },
   created () {
-    this.userInfo.sex = parseInt(this.userInfo.sex)
   },
   computed: {
     ...mapState({
@@ -140,6 +138,12 @@ export default {
           updateObjInfo(this.userInfo).then(response => {
             if (response.data.data) {
               notifySuccess(this, '修改成功')
+              // 重新拉取用户信息
+              store.dispatch('GetUserInfo').then(res => {
+                console.log('重新获取用户信息成功.')
+              }).catch((err) => {
+                console.error(err)
+              })
             } else {
               notifyFail(this, response.data.msg)
             }
@@ -154,44 +158,18 @@ export default {
         notifyFail(this, '头像上传失败')
         return
       }
-      this.userInfo.avatar = res.data.fastFileId
-      this.userInfo.avatarUrl = getAttachmentPreviewUrl(this.sysConfig, this.userInfo.avatar)
-      this.$refs['form'].validate((valid) => {
-        if (valid) {
-          if (isNotEmpty(this.userInfo.avatarId)) {
-            // 删除旧头像
-            delAttachment(this.userInfo.avatarId).then(() => {
-              this.userInfo.avatarId = res.data.id
-              // 更新头像信息
-              updateObjInfo(this.userInfo).then(response => {
-                if (isNotEmpty(response.data) && response.data.code === 200) {
-                  notifySuccess(this, '头像上传成功')
-                  // 更新localStorage
-                  store.commit('SET_USER_INFO', this.userInfo)
-                }
-              }).catch((error) => {
-                console.log(error)
-                notifyFail(this, '头像上传失败')
-              })
-            }).catch((error) => {
-              console.log(error)
-              notifyFail(this, '头像上传失败')
-            })
-          } else {
-            this.userInfo.avatarId = res.data.id
-            // 更新头像信息
-            updateObjInfo(this.userInfo).then(response => {
-              if (isNotEmpty(response.data) && response.data.code === 200) {
-                notifySuccess(this, '头像上传成功')
-                // 更新localStorage
-                store.commit('SET_USER_INFO', this.userInfo)
-              }
-            }).catch((error) => {
-              console.log(error)
-              notifyFail(this, '头像上传失败')
-            })
-          }
-        }
+      // 重新获取预览地址
+      preview(res.data.id).then(response => {
+        this.userInfo.avatarUrl = response.data.data
+      })
+      this.userInfo.avatarId = res.data.id
+      updateAvatar(this.userInfo).then(response => {
+        notifySuccess(this, '头像上传成功')
+        // 更新localStorage
+        store.commit('SET_USER_INFO', this.userInfo)
+      }).catch((error) => {
+        console.log(error)
+        notifyFail(this, '头像上传失败')
       })
     },
     beforeAvatarUpload (file) {

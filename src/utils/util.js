@@ -1,6 +1,5 @@
 import CryptoJS from 'crypto-js'
 import { ATTACHMENT_URL } from '@/config/attachment'
-import { TENANT_CODE } from '../../config/prod.env'
 
 /**
  * 加密处理
@@ -172,9 +171,41 @@ export const notifyFail = (obj, msg) => {
 }
 
 /**
- * 获取租户code
+ * 手机号验证
+ * @param str
+ * @returns {boolean}
+ */
+export const isValidPhone = (str) => {
+  const reg = /^1[3|4|5|7|8][0-9]\d{8}$/
+  return reg.test(str)
+}
+
+/**
+ * 格式化时间戳
+ * @param date
+ * @param fmt
  * @returns {*}
  */
-export const getTenantCode = () => {
-  return TENANT_CODE
+export const formatDate = (date, fmt) => {
+  if (/(y+)/.test(fmt)) {
+    fmt = fmt.replace(RegExp.$1, (date.getFullYear() + '').substr(4 - RegExp.$1.length))
+  }
+  let o = {
+    'M+': date.getMonth() + 1,
+    'd+': date.getDate(),
+    'h+': date.getHours(),
+    'm+': date.getMinutes(),
+    's+': date.getSeconds()
+  }
+  for (let k in o) {
+    if (new RegExp(`(${k})`).test(fmt)) {
+      let str = o[k] + ''
+      fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ? str : padLeftZero(str))
+    }
+  }
+  return fmt
+}
+
+export const padLeftZero = (str) => {
+  return ('00' + str).substr(str.length)
 }

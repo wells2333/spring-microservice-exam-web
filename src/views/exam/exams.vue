@@ -32,9 +32,9 @@
             <el-row>
               <el-col :span="24">
                 <div class="exam-panel-bottom">
-                  <time class="exam-time">开始时间：{{ exam.startTime }}</time>
+                  <time class="exam-time">开始时间：{{ exam.startTime | timeFilter }}</time>
                   <br>
-                  <time class="exam-time">结束时间：{{exam.endTime}}</time>
+                  <time class="exam-time">结束时间：{{ exam.endTime | timeFilter }}</time>
                   <el-button type="text" class="exam-button" @click="startExam(exam)">开始考试</el-button>
                 </div>
               </el-col>
@@ -52,7 +52,7 @@
 import { mapState } from 'vuex'
 import { fetchList } from '@/api/exam/exam'
 import { getCurrentTime } from '@/api/exam/examRecord'
-import { isNotEmpty, notifyFail, getAttachmentPreviewUrl } from '@/utils/util'
+import { isNotEmpty, notifyFail, getAttachmentPreviewUrl, formatDate } from '@/utils/util'
 import store from '@/store'
 import moment from 'moment'
 import PanThumb from '@/components/PanThumb'
@@ -67,6 +67,9 @@ export default {
         2: '在线练习'
       }
       return typeMap[type]
+    },
+    timeFilter (time) {
+      return formatDate(new Date(time), 'yyyy-MM-dd hh:mm')
     }
   },
   data () {

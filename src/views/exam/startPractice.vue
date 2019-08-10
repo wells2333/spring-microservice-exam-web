@@ -137,7 +137,7 @@ export default {
       // 选项
       this.option = isNotEmpty(this.tempAnswer) ? this.tempAnswer.answer : ''
       // 题号
-      this.query.serialNumber = parseInt(this.practiceSubject.serialNumber)
+      this.query.serialNumber = this.practiceSubject.serialNumber
     },
     // 上一题
     last () {
@@ -150,7 +150,7 @@ export default {
         })
       } else {
         // 题目序号减一
-        this.query.serialNumber = parseInt(this.query.serialNumber) - 1
+        this.query.serialNumber--
         // 保存当前题目，同时加载下一题
         this.saveCurrentSubjectAndGetNextSubject()
       }
@@ -158,14 +158,14 @@ export default {
     // 下一题
     next () {
       // 增加序号
-      this.query.serialNumber = parseInt(this.query.serialNumber) + 1
+      this.query.serialNumber++
       // 保存当前题目，同时加载下一题
       this.saveCurrentSubjectAndGetNextSubject()
     },
     // 保存当前题目，同时根据序号加载下一题
     saveCurrentSubjectAndGetNextSubject () {
       this.loading = true
-      let answerId = isNotEmpty(this.tempAnswer) ? this.tempAnswer.id : ''
+      let answerId = this.tempAnswer.id || ''
       let answer = {
         id: answerId,
         userId: this.userInfo.id,
@@ -173,25 +173,20 @@ export default {
         examRecordId: this.practiceRecord.id,
         subjectId: this.tempSubject.id,
         answer: this.option,
-        serialNumber: this.query.serialNumber // 下一题的序号
+        serialNumber: this.query.serialNumber
       }
       // 提交到后台
       saveAndNext(answer).then(response => {
         if (response.data.data === null) {
-          this.$notify({
-            title: '提示',
-            message: '已经是最后一题了',
-            type: 'warn',
-            duration: 2000
-          })
-          this.query.serialNumber = parseInt(this.query.serialNumber) - 1
+          notifySuccess(this, '已经是最后一题了')
+          this.query.serialNumber--
         } else {
           // 题目内容
           this.tempSubject = response.data.data
           // 答题
           this.tempAnswer = response.data.data.answer
           // 选项
-          this.option = isNotEmpty(this.tempAnswer) ? this.tempAnswer.answer : ''
+          this.option = this.tempAnswer.answer || ''
           // 保存题目答案到localStorage
           this.practiceSubject.answer = this.tempAnswer
           store.dispatch('SetPracticeSubjectInfo', this.tempSubject).then(() => {})
@@ -208,7 +203,7 @@ export default {
     },
     // 跳转题目
     toSubject (index) {
-      this.query.serialNumber = parseInt(index)
+      this.query.serialNumber = index
       // 保存当前题目，同时加载下一题
       this.saveCurrentSubjectAndGetNextSubject()
       this.dialogVisible = false

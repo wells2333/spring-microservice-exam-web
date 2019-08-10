@@ -1,7 +1,7 @@
-import {loginByUsername, registerByUsername, logout, getUserInfo} from '@/api/admin/login'
+import {loginByUsername, loginBySocial, registerByUsername, logout, getUserInfo} from '@/api/admin/login'
 import { setToken, removeToken, setRefreshToken, removeRefreshToken } from '@/utils/auth'
 import { setStore, getStore } from '@/utils/store'
-import { encryption, getAttachmentPreviewUrl, isNotEmpty, getTenantCode } from '@/utils/util'
+import { encryption } from '@/utils/util'
 
 const user = {
   state: {
@@ -25,6 +25,9 @@ const user = {
     }) || '',
     refresh_token: getStore({
       name: 'refresh_token'
+    }) || '',
+    tenantCode: getStore({
+      name: 'tenantCode'
     }) || ''
   },
   actions: {
@@ -34,16 +37,39 @@ const user = {
         const user = encryption({
           data: userInfo,
           key: '1234567887654321',
-          param: ['password']
+          param: ['credential']
         })
 
         // 根据用户名、密码、租户code登录
-        loginByUsername(user.username, user.password, user.code, user.randomStr, getTenantCode()).then(response => {
+        loginByUsername(user.identifier, user.credential, user.code, user.randomStr).then(response => {
           const data = response.data
           setToken(data.access_token)
           setRefreshToken(data.refresh_token)
           commit('SET_ACCESS_TOKEN', data.access_token)
           commit('SET_REFRESH_TOKEN', data.refresh_token)
+          commit('SET_TENANT_CODE', data.tenantCode)
+          resolve()
+        }).catch(error => {
+          reject(error)
+        })
+      })
+    },
+    // 根据手机号登录
+    LoginBySocial ({ commit, state, dispatch }, userInfo) {
+      return new Promise((resolve, reject) => {
+        const user = encryption({
+          data: userInfo,
+          key: '1234567887654321',
+          param: ['credential']
+        })
+        // 根据用户手机号、短信验证码获取token
+        loginBySocial(user.phone, user.code).then(response => {
+          const data = response.data
+          setToken(data.access_token)
+          setRefreshToken(data.refresh_token)
+          commit('SET_ACCESS_TOKEN', data.access_token)
+          commit('SET_REFRESH_TOKEN', data.refresh_token)
+          commit('SET_TENANT_CODE', data.tenantCode)
           resolve()
         }).catch(error => {
           reject(error)
@@ -55,9 +81,9 @@ const user = {
         const user = encryption({
           data: userInfo,
           key: '1234567887654321',
-          param: ['password']
+          param: ['credential']
         })
-        registerByUsername(user.username, user.name, user.password, user.code, user.randomStr, getTenantCode()).then(response => {
+        registerByUsername(user.identifier, user.email, user.credential, user.code, user.randomStr).then(response => {
           resolve()
         }).catch(error => {
           reject(error)
@@ -68,16 +94,8 @@ const user = {
       return new Promise((resolve, reject) => {
         getUserInfo(state.token).then(response => {
           const data = response.data.data
-          // 获取系统配置
-          const sysConfig = getStore({ name: 'sys_config' })
-          if (!isNotEmpty(data.user.avatarId)) {
-            // 采用默认头像
-            data.user.avatarUrl = sysConfig.defaultAvatar
-          } else {
-            data.user.avatarUrl = getAttachmentPreviewUrl(sysConfig, data.user.avatar)
-          }
           commit('SET_ROLES', data.roles)
-          commit('SET_USER_INFO', data.user)
+          commit('SET_USER_INFO', data)
           commit('SET_PERMISSIONS', data.permissions)
           resolve(response)
         }).catch(error => {
@@ -96,8 +114,10 @@ const user = {
           commit('SET_ACCESS_TOKEN', '')
           commit('SET_REFRESH_TOKEN', '')
           commit('SET_ROLES', [])
-          // 清除附件配置信息
+          // 清除系统配置信息
           commit('SET_SYS_CONFIG', {})
+          // 清除租户信息
+          commit('SET_TENANT_CODE', {})
           removeToken()
           resolve()
         }).catch(error => {
@@ -115,8 +135,10 @@ const user = {
         commit('SET_ACCESS_TOKEN', '')
         commit('SET_REFRESH_TOKEN', '')
         commit('SET_ROLES', [])
-        // 清除附件配置信息
+        // 清除系统配置信息
         commit('SET_SYS_CONFIG', {})
+        // 清除租户信息
+        commit('SET_TENANT_CODE', {})
         removeToken()
         removeRefreshToken()
         resolve()
@@ -161,6 +183,13 @@ const user = {
       setStore({
         name: 'permissions',
         content: state.permissions
+      })
+    },
+    SET_TENANT_CODE: (state, tenantCode) => {
+      state.tenantCode = tenantCode
+      setStore({
+        name: 'tenantCode',
+        content: state.tenantCode
       })
     }
   }

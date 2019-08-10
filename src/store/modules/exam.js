@@ -12,6 +12,9 @@ const exam = {
     }) || {},
     subject: getStore({
       name: 'subject'
+    }) || {},
+    incorrectRecord: getStore({
+      name: 'incorrectRecord'
     }) || {}
   },
   actions: {
@@ -41,6 +44,10 @@ const exam = {
           reject(error)
         })
       })
+    },
+    // 当前错题记录
+    SetIncorrectRecord ({ commit, state }, incorrectRecord) {
+      commit('SET_INCORRECT_RECORD', incorrectRecord)
     }
   },
   mutations: {
@@ -63,6 +70,13 @@ const exam = {
       setStore({
         name: 'subject',
         content: state.subject
+      })
+    },
+    SET_INCORRECT_RECORD: (state, incorrectRecord) => {
+      state.incorrectRecord = incorrectRecord
+      setStore({
+        name: 'incorrectRecord',
+        content: state.incorrectRecord
       })
     }
   }

@@ -17,6 +17,22 @@ export function getAnswer (id) {
   })
 }
 
+export function getAnswerInfo (id, query) {
+  return request({
+    url: baseAnswerUrl + id + '/info',
+    method: 'get',
+    params: query
+  })
+}
+
+export function getAnswerListInfo (id, query) {
+  return request({
+    url: baseAnswerUrl + 'record/' + id + '/answerListInfo',
+    method: 'get',
+    params: query
+  })
+}
+
 export function addAnswer (obj) {
   return request({
     url: baseAnswerUrl,

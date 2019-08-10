@@ -46,7 +46,7 @@
 <script>
 import OHeader from '../common/header'
 import OFooter from '../common/footer'
-import { updateObjInfo } from '@/api/admin/user'
+import { updatePassword } from '@/api/admin/user'
 import { mapState } from 'vuex'
 import { notifySuccess, notifyFail, isNotEmpty } from '@/utils/util'
 
@@ -101,21 +101,13 @@ export default {
     update () {
       this.$refs['form'].validate((valid) => {
         if (valid) {
-          if (this.userInfo.username === 'admin') {
-            notifyFail(this, '演示环境不能操作')
-            return
-          }
-          updateObjInfo(this.userInfo).then(response => {
+          updatePassword(this.userInfo).then(response => {
             if (response.data.data) {
               notifySuccess(this, '修改成功')
               // 修改密码之后强制重新登录
-              if (this.userInfo.newPassword !== '') {
-                this.$store.dispatch('LogOut').then(() => {
-                  location.reload()
-                })
-              } else {
-                this.$router.push({ path: '/' })
-              }
+              this.$store.dispatch('LogOut').then(() => {
+                this.$router.push({ path: '/login' })
+              })
             } else {
               notifyFail(this, response.data.msg)
             }
